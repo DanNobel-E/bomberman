@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     player0.movable.y = 100;
     player0.movable.width = 32;
     player0.movable.height = 32;
-    player0.movable.speed = 100;
+    player0.movable.speed = 48;
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -47,19 +47,19 @@ int main(int argc, char **argv)
             {
                 if (event.key.keysym.sym == SDLK_RIGHT)
                 {
-                    delta_right = player0.movable.speed * (1.0 / 144);
+                    delta_right = player0.movable.speed * (1.0 / 60);
                 }
                 if (event.key.keysym.sym == SDLK_LEFT)
                 {
-                    delta_left = -player0.movable.speed * (1.0 / 144);
+                    delta_left = -player0.movable.speed * (1.0 / 60);
                 }
                 if (event.key.keysym.sym == SDLK_DOWN)
                 {
-                    delta_down = player0.movable.speed * (1.0 / 144);
+                    delta_down = player0.movable.speed * (1.0 / 60);
                 }
                 if (event.key.keysym.sym == SDLK_UP)
                 {
-                    delta_up = -player0.movable.speed * (1.0 / 144);
+                    delta_up = -player0.movable.speed * (1.0 / 60);
                 }
             }
             if (event.type == SDL_KEYUP)
