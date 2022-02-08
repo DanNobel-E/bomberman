@@ -130,6 +130,8 @@ int main(int argc, char **argv)
         SDL_RenderPresent(renderer);
     }
 
+    SDL_free(file_data);
+    SDL_free(player0.texture_data.pixels);
     SDL_Quit();
     return 0;
 }
