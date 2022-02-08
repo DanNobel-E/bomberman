@@ -1,25 +1,17 @@
 #include "bomberman.h"
 
-int check_border_collisons(level_t *level, movable_t *movable, const float new_x, const float new_y)
+int check_border_collisons(const uint32_t level_dim, const uint32_t movable_dim, float *movable_coord, const float new_coord)
 {
 
     int result = 0;
-    if (new_x < 0)
-        movable->x = 0;
-    else if (new_x + movable->width >= level->cols * level->cell_size)
-        movable->x = (level->cols * level->cell_size) - movable->width;
-    else
-    {
-        result = -1;
-    }
 
-    if (new_y < 0)
-        movable->y = 0;
-    else if (new_y + movable->height >= level->rows * level->cell_size)
-        movable->y = (level->rows * level->cell_size) - movable->height;
+    if (new_coord < 0)
+        *movable_coord = 0;
+    else if (new_coord + movable_dim >= level_dim)
+        *movable_coord = level_dim - movable_dim;
     else
     {
-        result = -1;
+        result -= 1;
     }
 
     return result;
@@ -34,17 +26,17 @@ int32_t move_on_level(level_t *level, movable_t *movable, const float delta_x, c
     float new_x = movable->x + delta_x;
     float new_y = movable->y + delta_y;
 
-    if (!check_border_collisons(level, movable, new_x, new_y))
-    {
-        return -1;
-    }
-
     int32_t cell = -1;
     int dimension_offset = 0;
     int direction_offset = 1;
 
     if (delta_x != 0) // x axis movement
     {
+        uint32_t level_width= level->cell_size*level->cols;
+        if (!check_border_collisons(level_width, movable->width, &movable->x, new_x))
+        {
+            return -1;
+        }
 
         if (new_x > movable->x)
         {
@@ -76,6 +68,13 @@ int32_t move_on_level(level_t *level, movable_t *movable, const float delta_x, c
     }
     else // y axis movement
     {
+        uint32_t level_height= level->cell_size*level->rows;
+
+        if (!check_border_collisons(level_height, movable->height, &movable->y, new_y))
+        {
+            return -1;
+        }
+
         if (new_y > movable->y)
         {
             dimension_offset = movable->height;
