@@ -1,12 +1,15 @@
 #include <SDL.h>
 #include "bomberman.h"
 #include "level001.h"
+#include "bmp_parser.h"
 
 int main(int argc, char **argv)
 {
 
     level_t level001;
     level_init(&level001, 8, 8, 64, level001_cells);
+
+    SDL_Init(SDL_INIT_VIDEO);
 
     bomberman_t player0;
     player0.movable.x = 100;
@@ -15,7 +18,10 @@ int main(int argc, char **argv)
     player0.movable.height = 32;
     player0.movable.speed = 48;
 
-    SDL_Init(SDL_INIT_VIDEO);
+    Sint64 bomberman_texture_size=0;
+    bmp_open_file("./Sprites/ExplodableBlock.bmp", &bomberman_texture_size);
+    Uint8 *file_data = bmp_open_file("./Sprites/ExplodableBlock.bmp", &bomberman_texture_size);
+    player0.texture_data.pixels = bmp_parse(file_data, &player0.texture_data.width, &player0.texture_data.height);
 
     SDL_Window *window = SDL_CreateWindow("Bomberman",
                                           SDL_WINDOWPOS_CENTERED,
@@ -27,6 +33,9 @@ int main(int argc, char **argv)
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
     SDL_Rect cell_rect = {0, 0, level001.cell_size, level001.cell_size};
+
+    SDL_Texture *player0_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGR24, SDL_TEXTUREACCESS_STATIC, player0.texture_data.width, player0.texture_data.height);
+    SDL_UpdateTexture(player0_texture, NULL, player0.texture_data.pixels, player0.texture_data.width * 3);
 
     SDL_Rect player0_rect = {0, 0, player0.movable.width, player0.movable.height};
 
@@ -116,8 +125,7 @@ int main(int argc, char **argv)
         move_on_level(&level001, &player0.movable, delta_right + delta_left, delta_down + delta_up);
         player0_rect.x = player0.movable.x;
         player0_rect.y = player0.movable.y;
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &player0_rect);
+        SDL_RenderCopy(renderer, player0_texture, NULL, &player0_rect);
 
         SDL_RenderPresent(renderer);
     }

@@ -29,11 +29,18 @@ typedef struct movable
 } movable_t;
 
 // try moving an object on the level
-int32_t move_on_level(level_t* level, movable_t* movable, const float delta_x, const float delta_y);
+int32_t move_on_level(level_t *level, movable_t *movable, const float delta_x, const float delta_y);
+typedef struct texture_data
+{
+    uint8_t *pixels;
+    uint32_t width;
+    uint32_t height;
+} texture_data_t;
 
 typedef struct bomberman
 {
     movable_t movable;
+    texture_data_t texture_data;
     uint32_t number_of_bombs;
     uint32_t dropped_bombs;
     uint32_t bomb_power;
@@ -42,6 +49,6 @@ typedef struct bomberman
 // initialize a level structure
 int level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells);
 // get the cell content at the specified coordinates
-int32_t level_cell(level_t* level, const uint32_t col, const uint32_t row);
+int32_t level_cell(level_t *level, const uint32_t col, const uint32_t row);
 
 #endif
