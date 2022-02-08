@@ -18,6 +18,7 @@ Uint8 *bmp_open_file(const char *file_path, Sint64 *file_size);
  *@return a pointer to texture pixels data.
  *
  *@param file_data pointer to data content of a bitmap file.
- *
+ *@param texture_width where to store texture width infos.
+ *@param texture_height where to store texture height infos.
  */
 Uint8 *bmp_parse(Uint8 *file_data, Uint32 *texture_width, Uint32 *  texture_height);
