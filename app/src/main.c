@@ -20,15 +20,17 @@ int main(int argc, char **argv)
     player0.movable.height = 32;
     player0.movable.speed = 48;
 
+    // png parsed texture
     Sint64 bomberman_texture_size = 0;
     png_open_file("./Sprites/Bomberman/Front/Bman_F_f00.png", &bomberman_texture_size);
     Uint8 *file_data = png_open_file("./Sprites/Bomberman/Front/Bman_F_f00.png", &bomberman_texture_size);
     player0.texture_data.pixels = png_parse(file_data, &player0.texture_data.width, &player0.texture_data.height);
-
-    // Sint64 bomberman_texture_size=0;
-    // bmp_open_file("./Sprites/ExplodableBlock.bmp", &bomberman_texture_size);
-    // Uint8 *file_data = bmp_open_file("./Sprites/ExplodableBlock.bmp", &bomberman_texture_size);
-    // player0.texture_data.pixels = bmp_parse(file_data, &player0.texture_data.width, &player0.texture_data.height);
+    
+    // bmp parsed texture
+    //  Sint64 bomberman_texture_size=0;
+    //  bmp_open_file("./Sprites/ExplodableBlock.bmp", &bomberman_texture_size);
+    //  Uint8 *file_data = bmp_open_file("./Sprites/ExplodableBlock.bmp", &bomberman_texture_size);
+    //  player0.texture_data.pixels = bmp_parse(file_data, &player0.texture_data.width, &player0.texture_data.height);
 
     SDL_Window *window = SDL_CreateWindow("Bomberman",
                                           SDL_WINDOWPOS_CENTERED,
@@ -45,9 +47,8 @@ int main(int argc, char **argv)
     SDL_SetTextureBlendMode(player0_texture, SDL_BLENDMODE_BLEND);
     SDL_UpdateTexture(player0_texture, NULL, player0.texture_data.pixels, player0.texture_data.width * 4);
 
-    SDL_Rect player0_rect = {0, 0, player0.movable.width, player0.movable.height*2};
-    SDL_Rect texture_rect = {0, player0.texture_data.height*0.25f, player0.texture_data.width, player0.texture_data.height};
-
+    SDL_Rect player0_rect = {0, 0, player0.movable.width, player0.movable.height};
+    SDL_Rect texture_rect = {0, 0, player0.texture_data.width, player0.texture_data.height};
 
     float delta_right = 0;
     float delta_left = 0;

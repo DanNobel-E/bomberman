@@ -102,115 +102,113 @@ Uint8 *png_parse(Uint8 *file_data, Uint32 *texture_width, Uint32 *texture_height
     if (png_IHDR_parse(chunks[0].data, &params, texture_width, texture_height) != 0)
         return NULL;
 
-    printf("w: %d h: %d\n", params.width, params.height);
-    printf("BD: %d CT: %d CM: %d FM: %d IM: %d\n",
            params.bit_depth, params.color_type, params.compression, params.filter, params.interlace);
 
-    if (png_chunk_check(&chunks, chunk_counter, "IDAT") != 0)
-        return NULL;
+           if (png_chunk_check(&chunks, chunk_counter, "IDAT") != 0)
+               return NULL;
 
-    Uint8 *IDAT_total_data = NULL;
-    int data_offset = 0;
-    int data_index = 0;
-    Uint32 total_data_size = 0;
+           Uint8 *IDAT_total_data = NULL;
+           int data_offset = 0;
+           int data_index = 0;
+           Uint32 total_data_size = 0;
 
-    for (int i = 0; i < chunk_counter; i++)
-    {
-        if (!SDL_memcmp((chunks + i)->type, "IDAT", type_size))
-        {
+           for (int i = 0; i < chunk_counter; i++)
+           {
+               if (!SDL_memcmp((chunks + i)->type, "IDAT", type_size))
+               {
 
-            total_data_size += (chunks + i)->data_size;
-            if (!IDAT_total_data)
-                IDAT_total_data = SDL_malloc(sizeof(Uint8) * total_data_size);
-            else
-                IDAT_total_data = SDL_realloc(IDAT_total_data, sizeof(Uint8) * total_data_size);
+                   total_data_size += (chunks + i)->data_size;
+                   if (!IDAT_total_data)
+                       IDAT_total_data = SDL_malloc(sizeof(Uint8) * total_data_size);
+                   else
+                       IDAT_total_data = SDL_realloc(IDAT_total_data, sizeof(Uint8) * total_data_size);
 
-            SDL_memcpy(IDAT_total_data + data_offset, (chunks + i)->data, (chunks + i)->data_size);
-            data_offset = total_data_size;
-        }
-    }
+                   SDL_memcpy(IDAT_total_data + data_offset, (chunks + i)->data, (chunks + i)->data_size);
+                   data_offset = total_data_size;
+               }
+           }
 
-    uLongf uncompression_buffer_size = 1024;
-    Uint8 *uncompressed_IDAT_data = (Uint8 *)SDL_malloc(sizeof(Uint8) * uncompression_buffer_size);
+           uLongf uncompression_buffer_size = 1024;
+           Uint8 *uncompressed_IDAT_data = (Uint8 *)SDL_malloc(sizeof(Uint8) * uncompression_buffer_size);
 
-    int uncompression_result = uncompress(uncompressed_IDAT_data, &uncompression_buffer_size, IDAT_total_data, total_data_size);
+           int uncompression_result = uncompress(uncompressed_IDAT_data, &uncompression_buffer_size, IDAT_total_data, total_data_size);
 
-    if (uncompression_result == Z_BUF_ERROR)
-    {
-        do
-        {
+           if (uncompression_result == Z_BUF_ERROR)
+           {
+               do
+               {
 
-            uncompression_buffer_size *= 2;
-            uncompressed_IDAT_data = SDL_realloc((Uint8 *)uncompressed_IDAT_data, uncompression_buffer_size);
-            uncompression_result = uncompress(uncompressed_IDAT_data, &uncompression_buffer_size, IDAT_total_data, total_data_size);
+                   uncompression_buffer_size *= 2;
+                   uncompressed_IDAT_data = SDL_realloc((Uint8 *)uncompressed_IDAT_data, uncompression_buffer_size);
+                   uncompression_result = uncompress(uncompressed_IDAT_data, &uncompression_buffer_size, IDAT_total_data, total_data_size);
 
-        } while (uncompression_result == Z_BUF_ERROR);
+               } while (uncompression_result == Z_BUF_ERROR);
 
-        if (uncompression_result == Z_MEM_ERROR || uncompression_result == Z_DATA_ERROR)
-            return NULL;
-    }
-    else if (uncompression_result == Z_MEM_ERROR || uncompression_result == Z_DATA_ERROR)
-        return NULL;
+               if (uncompression_result == Z_MEM_ERROR || uncompression_result == Z_DATA_ERROR)
+                   return NULL;
+           }
+           else if (uncompression_result == Z_MEM_ERROR || uncompression_result == Z_DATA_ERROR)
+               return NULL;
 
-    Uint8 channels = 4;
-    Uint32 stride = params.width * channels;
+           Uint8 channels = 4;
+           Uint32 stride = params.width * channels;
 
-    if (uncompression_buffer_size != params.height * (stride + 1))
-        return NULL;
+           if (uncompression_buffer_size != params.height * (stride + 1))
+               return NULL;
 
-    Uint8 *reconstructed_IDAT_data = SDL_malloc(sizeof(Uint8) * uncompression_buffer_size);
+           Uint8 *reconstructed_IDAT_data = SDL_malloc(sizeof(Uint8) * uncompression_buffer_size);
 
-    int i = 0;
-    for (int y = 0; y < params.height; y++)
-    {
-        Uint8 filter_type = uncompressed_IDAT_data[i];
-        i++;
-        for (int x = 0; x < stride; x++)
-        {
-            Uint8 current_byte = uncompressed_IDAT_data[i];
-            i++;
-            Uint8 filter;
+           int i = 0;
+           for (int y = 0; y < params.height; y++)
+           {
+               Uint8 filter_type = uncompressed_IDAT_data[i];
+               i++;
+               for (int x = 0; x < stride; x++)
+               {
+                   Uint8 current_byte = uncompressed_IDAT_data[i];
+                   i++;
+                   Uint8 filter;
 
-            if (filter_type == 0)
-                filter = 0;
-            else if (filter_type == 1)
-                filter = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
-            else if (filter_type == 2)
-                filter = png_recon_b(reconstructed_IDAT_data, x, y, stride);
-            else if (filter_type == 3)
-            {
-                Uint8 filter_a = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
-                Uint8 filter_b = png_recon_b(reconstructed_IDAT_data, x, y, stride);
+                   if (filter_type == 0)
+                       filter = 0;
+                   else if (filter_type == 1)
+                       filter = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
+                   else if (filter_type == 2)
+                       filter = png_recon_b(reconstructed_IDAT_data, x, y, stride);
+                   else if (filter_type == 3)
+                   {
+                       Uint8 filter_a = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
+                       Uint8 filter_b = png_recon_b(reconstructed_IDAT_data, x, y, stride);
 
-                filter = floor((filter_a + filter_b) / 2);
-            }
-            else if (filter_type == 4)
-            {
-                Uint8 filter_a = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
-                Uint8 filter_b = png_recon_b(reconstructed_IDAT_data, x, y, stride);
-                Uint8 filter_c = png_recon_c(reconstructed_IDAT_data, x, y, stride, channels);
+                       filter = floor((filter_a + filter_b) / 2);
+                   }
+                   else if (filter_type == 4)
+                   {
+                       Uint8 filter_a = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
+                       Uint8 filter_b = png_recon_b(reconstructed_IDAT_data, x, y, stride);
+                       Uint8 filter_c = png_recon_c(reconstructed_IDAT_data, x, y, stride, channels);
 
-                filter = png_paeth_predictor(filter_a,filter_b,filter_c);
-            }
-            else
-            {
+                       filter = png_paeth_predictor(filter_a, filter_b, filter_c);
+                   }
+                   else
+                   {
 
-                return NULL;
-            }
+                       return NULL;
+                   }
 
-            reconstructed_IDAT_data[y*stride+x] = (current_byte + filter) & 0xff;
-        }
-    }
+                   reconstructed_IDAT_data[y * stride + x] = (current_byte + filter) & 0xff;
+               }
+           }
 
-    SDL_free(IDAT_total_data);
-    SDL_free(uncompressed_IDAT_data);
-    for (int i = 0; i < chunk_counter; i++)
-    {
-        png_free_chunk(chunks + i);
-    }
-    chunks = NULL;
+           SDL_free(IDAT_total_data);
+           SDL_free(uncompressed_IDAT_data);
+           for (int i = 0; i < chunk_counter; i++)
+           {
+               png_free_chunk(chunks + i);
+           }
+           chunks = NULL;
 
-    return reconstructed_IDAT_data;
+           return reconstructed_IDAT_data;
 }
 
 int png_chunk_check(png_chunk_t **chunks_ptr, const int chunk_count, const char *chunk_name)
