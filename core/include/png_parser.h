@@ -54,4 +54,12 @@ int png_chunk_check(png_chunk_t **chunks_ptr, const int chunk_count, const char 
 
 int png_IHDR_parse(Uint8 *IHDR_data, png_params_t *png_params, Uint32 *texture_width, Uint32 *texture_height);
 
+Uint8 png_paeth_predictor(const Uint8 a, const Uint8 b, const Uint8 c);
+
+Uint8 png_recon_a(Uint8 *recon_data, const Uint8 x, const Uint8 y, const Uint32 stride, const Uint8 channels);
+
+Uint8 png_recon_b(Uint8 *recon_data, const Uint8 x, const Uint8 y, const Uint32 stride);
+
+Uint8 png_recon_c(Uint8 *recon_data, const Uint8 x, const Uint8 y, const Uint32 stride, const Uint8 channels);
+
 void png_free_chunk(png_chunk_t *chunk);

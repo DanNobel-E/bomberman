@@ -77,6 +77,12 @@ Uint8 *png_parse(Uint8 *file_data, Uint32 *texture_width, Uint32 *texture_height
         chunk_crc = _byteswap_ulong(chunk_crc);
         offset += crc_size;
 
+        Uint32 type_crc = crc32(0, (const Bytef *)chunk_type, type_size);
+        Uint32 checksum = crc32(type_crc, chunk_data, data_size);
+
+        if (checksum != chunk_crc)
+            return NULL;
+
         if (!chunks)
             chunks = (png_chunk_t *)SDL_malloc(sizeof(png_chunk_t));
         else
@@ -146,7 +152,55 @@ Uint8 *png_parse(Uint8 *file_data, Uint32 *texture_width, Uint32 *texture_height
     else if (uncompression_result == Z_MEM_ERROR || uncompression_result == Z_DATA_ERROR)
         return NULL;
 
-    printf("%lu", uncompression_buffer_size);
+    Uint8 channels = 4;
+    Uint32 stride = params.width * channels;
+
+    if (uncompression_buffer_size != params.height * (stride + 1))
+        return NULL;
+
+    Uint8 *reconstructed_IDAT_data = SDL_malloc(sizeof(Uint8) * uncompression_buffer_size);
+
+    int i = 0;
+    for (int y = 0; y < params.height; y++)
+    {
+        Uint8 filter_type = uncompressed_IDAT_data[i];
+        i++;
+        for (int x = 0; x < stride; x++)
+        {
+            Uint8 current_byte = uncompressed_IDAT_data[i];
+            i++;
+            Uint8 filter;
+
+            if (filter_type == 0)
+                filter = 0;
+            else if (filter_type == 1)
+                filter = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
+            else if (filter_type == 2)
+                filter = png_recon_b(reconstructed_IDAT_data, x, y, stride);
+            else if (filter_type == 3)
+            {
+                Uint8 filter_a = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
+                Uint8 filter_b = png_recon_b(reconstructed_IDAT_data, x, y, stride);
+
+                filter = floor((filter_a + filter_b) / 2);
+            }
+            else if (filter_type == 4)
+            {
+                Uint8 filter_a = png_recon_a(reconstructed_IDAT_data, x, y, stride, channels);
+                Uint8 filter_b = png_recon_b(reconstructed_IDAT_data, x, y, stride);
+                Uint8 filter_c = png_recon_c(reconstructed_IDAT_data, x, y, stride, channels);
+
+                filter = filter_a + filter_b + filter_c;
+            }
+            else
+            {
+
+                return NULL;
+            }
+
+            reconstructed_IDAT_data[y*stride+x] = (current_byte + filter) & 0xff;
+        }
+    }
 
     SDL_free(IDAT_total_data);
     SDL_free(uncompressed_IDAT_data);
@@ -156,7 +210,7 @@ Uint8 *png_parse(Uint8 *file_data, Uint32 *texture_width, Uint32 *texture_height
     }
     chunks = NULL;
 
-    return NULL;
+    return reconstructed_IDAT_data;
 }
 
 int png_chunk_check(png_chunk_t **chunks_ptr, const int chunk_count, const char *chunk_name)
@@ -251,6 +305,51 @@ int png_IHDR_parse(Uint8 *IHDR_data, png_params_t *params, Uint32 *texture_width
         return -1;
 
     return 0;
+}
+
+Uint8 png_paeth_predictor(const Uint8 a, const Uint8 b, const Uint8 c)
+{
+    Uint8 p = a + b - c;
+    Uint8 pa = abs(p - a);
+    Uint8 pb = abs(p - b);
+    Uint8 pc = abs(p - c);
+
+    Uint8 pr;
+    if (pa <= pb && pa <= pc)
+        pr = a;
+    else if (pb <= pc)
+        pr = b;
+    else
+        pr = c;
+
+    return pr;
+}
+
+Uint8 png_recon_a(Uint8 *recon_data, const Uint8 x, const Uint8 y, const Uint32 stride, const Uint8 channels)
+{
+    if (x < channels)
+        return 0;
+
+    int offset = y * stride + x - channels;
+    return *(recon_data + offset);
+}
+
+Uint8 png_recon_b(Uint8 *recon_data, const Uint8 x, const Uint8 y, const Uint32 stride)
+{
+    if (y <= 0)
+        return 0;
+
+    int offset = (y - 1) * stride + x;
+    return *(recon_data + offset);
+}
+
+Uint8 png_recon_c(Uint8 *recon_data, const Uint8 x, const Uint8 y, const Uint32 stride, const Uint8 channels)
+{
+    if (y <= 0 || x < channels)
+        return 0;
+
+    int offset = (y - 1) * stride + x - channels;
+    return *(recon_data + offset);
 }
 
 void png_free_chunk(png_chunk_t *chunk)
