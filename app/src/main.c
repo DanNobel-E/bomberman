@@ -21,8 +21,8 @@ int main(int argc, char **argv)
     player0.movable.speed = 48;
 
     Sint64 bomberman_texture_size = 0;
-    png_open_file("./Sprites/basn6a08.png", &bomberman_texture_size);
-    Uint8 *file_data = png_open_file("./Sprites/basn6a08.png", &bomberman_texture_size);
+    png_open_file("./Sprites/Bomberman/Front/Bman_F_f00.png", &bomberman_texture_size);
+    Uint8 *file_data = png_open_file("./Sprites/Bomberman/Front/Bman_F_f00.png", &bomberman_texture_size);
     player0.texture_data.pixels = png_parse(file_data, &player0.texture_data.width, &player0.texture_data.height);
 
     // Sint64 bomberman_texture_size=0;
@@ -45,7 +45,9 @@ int main(int argc, char **argv)
     SDL_SetTextureBlendMode(player0_texture, SDL_BLENDMODE_BLEND);
     SDL_UpdateTexture(player0_texture, NULL, player0.texture_data.pixels, player0.texture_data.width * 4);
 
-    SDL_Rect player0_rect = {0, 0, player0.movable.width, player0.movable.height};
+    SDL_Rect player0_rect = {0, 0, player0.movable.width, player0.movable.height*2};
+    SDL_Rect texture_rect = {0, player0.texture_data.height*0.25f, player0.texture_data.width, player0.texture_data.height};
+
 
     float delta_right = 0;
     float delta_left = 0;
@@ -133,7 +135,7 @@ int main(int argc, char **argv)
         move_on_level(&level001, &player0.movable, delta_right + delta_left, delta_down + delta_up);
         player0_rect.x = player0.movable.x;
         player0_rect.y = player0.movable.y;
-        SDL_RenderCopy(renderer, player0_texture, NULL, &player0_rect);
+        SDL_RenderCopy(renderer, player0_texture, &texture_rect, &player0_rect);
 
         SDL_RenderPresent(renderer);
     }
