@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <stdio.h>
 #include "bomberman.h"
 #include "level001.h"
 #include "bmp_parser.h"
@@ -19,11 +20,10 @@ int main(int argc, char **argv)
     player0.movable.height = 32;
     player0.movable.speed = 48;
 
-    Sint64 bomberman_texture_size=0;
+    Sint64 bomberman_texture_size = 0;
     png_open_file("./Sprites/basn6a08.png", &bomberman_texture_size);
     Uint8 *file_data = png_open_file("./Sprites/basn6a08.png", &bomberman_texture_size);
     player0.texture_data.pixels = png_parse(file_data, &player0.texture_data.width, &player0.texture_data.height);
-
 
     // Sint64 bomberman_texture_size=0;
     // bmp_open_file("./Sprites/ExplodableBlock.bmp", &bomberman_texture_size);
@@ -137,8 +137,8 @@ int main(int argc, char **argv)
     //     SDL_RenderPresent(renderer);
     // }
 
-    //SDL_free(file_data);
-    //SDL_free(player0.texture_data.pixels);
+    // SDL_free(file_data);
+    // SDL_free(player0.texture_data.pixels);
     SDL_Quit();
     return 0;
 }
