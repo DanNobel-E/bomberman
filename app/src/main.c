@@ -42,6 +42,7 @@ int main(int argc, char **argv)
     SDL_Rect cell_rect = {0, 0, level001.cell_size, level001.cell_size};
 
     SDL_Texture *player0_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, player0.texture_data.width, player0.texture_data.height);
+    SDL_SetTextureBlendMode(player0_texture, SDL_BLENDMODE_BLEND);
     SDL_UpdateTexture(player0_texture, NULL, player0.texture_data.pixels, player0.texture_data.width * 4);
 
     SDL_Rect player0_rect = {0, 0, player0.movable.width, player0.movable.height};

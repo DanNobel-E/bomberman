@@ -190,7 +190,7 @@ Uint8 *png_parse(Uint8 *file_data, Uint32 *texture_width, Uint32 *texture_height
                 Uint8 filter_b = png_recon_b(reconstructed_IDAT_data, x, y, stride);
                 Uint8 filter_c = png_recon_c(reconstructed_IDAT_data, x, y, stride, channels);
 
-                filter = filter_a + filter_b + filter_c;
+                filter = png_paeth_predictor(filter_a,filter_b,filter_c);
             }
             else
             {
