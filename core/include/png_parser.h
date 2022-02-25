@@ -1,5 +1,4 @@
 #include <SDL.h>
-#include <zlib.h>
 
 typedef struct png_chunk
 {

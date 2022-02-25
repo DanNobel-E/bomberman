@@ -28,27 +28,6 @@ typedef struct movable
     float speed;
 } movable_t;
 
-/*
- *Check collision with level borders.
- *@return 0 value if collision happens.
- *
- *@param level_dim level checked dimension (width or height).
- *@param movable_dim movable dimension to check (width or height).
- *@param movable_coord pointer to movable coordinate to check and fix (x or y).
- *@param new_coord movable new coordinate to check for validation.
- */
-int check_border_collisons(const uint32_t level_dim, const uint32_t movable_dim, float *movable_coord, const float new_coord);
-
-/*
- *Moves a movable object on a given level.
- *@return index of the new cell the movable object has moved over. -1 if motion failed.
- *
- *@param level level where to move movable object.
- *@param movable movable object to move.
- *@param delta_x position variation on x axis.
- *@param delta_y position variation on y axis.
- */
-int32_t move_on_level(level_t *level, movable_t *movable, const float delta_x, const float delta_y);
 typedef struct texture_data
 {
     uint8_t *pixels;
@@ -65,9 +44,32 @@ typedef struct bomberman
     uint32_t bomb_power;
 } bomberman_t;
 
+/*
+ *Check collision with level borders.
+ *@return 0 value if collision happens.
+ *
+ *@param level_dim level checked dimension (width or height).
+ *@param movable_dim movable dimension to check (width or height).
+ *@param movable_coord pointer to movable coordinate to check and fix (x or y).
+ *@param new_coord movable new coordinate to check for validation.
+ */
+int bomberman_check_border_collisons(const uint32_t level_dim, const uint32_t movable_dim, float *movable_coord, const float new_coord);
+
+/*
+ *Moves a movable object on a given level.
+ *@return index of the new cell the movable object has moved over. -1 if motion failed.
+ *
+ *@param level level where to move movable object.
+ *@param movable movable object to move.
+ *@param delta_x position variation on x axis.
+ *@param delta_y position variation on y axis.
+ */
+int32_t bomberman_move_on_level(level_t *level, movable_t *movable, const float delta_x, const float delta_y);
+
+
 // initialize a level structure
-int level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells);
+int bomberman_level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells);
 // get the cell content at the specified coordinates
-int32_t level_cell(level_t *level, const uint32_t col, const uint32_t row);
+int32_t bomberman_level_cell(level_t *level, const uint32_t col, const uint32_t row);
 
 #endif

@@ -102,8 +102,7 @@ Uint8 *png_parse(Uint8 *file_data, Uint32 *texture_width, Uint32 *texture_height
     if (png_IHDR_parse(chunks[0].data, &params, texture_width, texture_height) != 0)
         return NULL;
 
-           params.bit_depth, params.color_type, params.compression, params.filter, params.interlace);
-
+     
            if (png_chunk_check(&chunks, chunk_counter, "IDAT") != 0)
                return NULL;
 

@@ -1,7 +1,7 @@
 #include <SDL.h>
 #include <stdio.h>
 #include "bomberman.h"
-#include "level001.h"
+#include "bomberman_level001.h"
 #include "bmp_parser.h"
 #include "png_parser.h"
 
@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 {
 
     level_t level001;
-    level_init(&level001, 8, 8, 64, level001_cells);
+    bomberman_level_init(&level001, 8, 8, 64, level001_cells);
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
         {
             for (uint32_t col = 0; col < level001.cols; col++)
             {
-                int32_t cell = level_cell(&level001, col, row);
+                int32_t cell = bomberman_level_cell(&level001, col, row);
                 int32_t cell_texture = cell & 0xff;
                 cell_rect.x = col * level001.cell_size;
                 cell_rect.y = row * level001.cell_size;
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
             }
         }
 
-        move_on_level(&level001, &player0.movable, delta_right + delta_left, delta_down + delta_up);
+        bomberman_move_on_level(&level001, &player0.movable, delta_right + delta_left, delta_down + delta_up);
         player0_rect.x = player0.movable.x;
         player0_rect.y = player0.movable.y;
         SDL_RenderCopy(renderer, player0_texture, &texture_rect, &player0_rect);
