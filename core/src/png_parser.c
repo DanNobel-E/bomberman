@@ -1,7 +1,5 @@
 #include <SDL.h>
 #include <zlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "png_parser.h"
 
 Uint8 *png_open_file(const char *file_path, Sint64 *file_size)

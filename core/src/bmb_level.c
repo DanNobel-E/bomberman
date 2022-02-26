@@ -1,6 +1,6 @@
-#include "bomberman.h"
+#include "bmb_bomberman.h"
 
-int bomberman_level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells)
+int bmb_level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells)
 {
     if (!level || !cols || !rows || !cell_size)
         return -1;
@@ -12,7 +12,7 @@ int bomberman_level_init(level_t *level, const uint32_t cols, const uint32_t row
     return 0;
 }
 
-int32_t bomberman_level_cell(level_t *level, const uint32_t col, const uint32_t row)
+int32_t bmb_level_cell(level_t *level, const uint32_t col, const uint32_t row)
 {
     if (!level->cells)
         return -1;

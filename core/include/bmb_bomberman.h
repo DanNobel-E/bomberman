@@ -1,6 +1,6 @@
-#ifndef BOMBERMAN_H
-#define BOMBERMAN_H
+#pragma once
 
+#include <SDL.h>
 #include <stdint.h>
 
 #define BLOCK_MASK_UNWALKABLE 0x0100
@@ -17,14 +17,23 @@ typedef struct level
     uint32_t cols;      // number of columns of the level grid
     uint32_t rows;      // number of rows of the level grid
     uint32_t cell_size; // size in pixel of a single cell
+    SDL_Rect cell_rect;
 } level_t;
 
+typedef struct deltamove_t
+{
+    float right;
+    float left;
+    float down;
+    float up;
+} deltamove_t;
 typedef struct movable
 {
     float x;
     float y;
     uint32_t width;
     uint32_t height;
+    deltamove_t deltamove;
     float speed;
 } movable_t;
 
@@ -33,15 +42,17 @@ typedef struct texture_data
     uint8_t *pixels;
     uint32_t width;
     uint32_t height;
+    SDL_Rect texture_rect;
 } texture_data_t;
 
 typedef struct bomberman
 {
     movable_t movable;
-    texture_data_t texture_data;
     uint32_t number_of_bombs;
     uint32_t dropped_bombs;
     uint32_t bomb_power;
+    texture_data_t texture_data;
+    SDL_Rect player_rect;
 } bomberman_t;
 
 /*
@@ -53,7 +64,7 @@ typedef struct bomberman
  *@param movable_coord pointer to movable coordinate to check and fix (x or y).
  *@param new_coord movable new coordinate to check for validation.
  */
-int bomberman_check_border_collisons(const uint32_t level_dim, const uint32_t movable_dim, float *movable_coord, const float new_coord);
+int bmb_check_border_collisons(const uint32_t level_dim, const uint32_t movable_dim, float *movable_coord, const float new_coord);
 
 /*
  *Moves a movable object on a given level.
@@ -64,12 +75,9 @@ int bomberman_check_border_collisons(const uint32_t level_dim, const uint32_t mo
  *@param delta_x position variation on x axis.
  *@param delta_y position variation on y axis.
  */
-int32_t bomberman_move_on_level(level_t *level, movable_t *movable, const float delta_x, const float delta_y);
-
+int32_t bmb_move_on_level(level_t *level, movable_t *movable);
 
 // initialize a level structure
-int bomberman_level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells);
+int bmb_level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells);
 // get the cell content at the specified coordinates
-int32_t bomberman_level_cell(level_t *level, const uint32_t col, const uint32_t row);
-
-#endif
+int32_t bmb_level_cell(level_t *level, const uint32_t col, const uint32_t row);
