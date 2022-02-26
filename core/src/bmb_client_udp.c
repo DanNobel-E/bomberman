@@ -8,6 +8,7 @@
 #endif
 
 #include <stdio.h>
+#include "bmb_client_udp.h"
 
 int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, const int port)
 {
@@ -44,7 +45,17 @@ void bmb_client_send_packet(const struct sockaddr_in *sin, const int *s, const c
 {
 
     int sent_bytes = sendto(*s, data, data_lenght, 0, (struct sockaddr *)sin, sizeof(*sin));
-    printf("sent %d bytes via UDP", sent_bytes);
+    printf("sent %d bytes via UDP\n", sent_bytes);
+}
+
+packet_auth_t bmb_packet_auth()
+{
+    return (packet_auth_t){PK_AUTH_ID,(uint8_t)rand()};
+}
+
+packet_position_t bmb_packet_position(const float x, const float y)
+{
+    return (packet_position_t){PK_POS_ID,x,y};
 }
 
 void bmb_client_close(int *s)

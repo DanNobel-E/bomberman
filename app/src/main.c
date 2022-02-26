@@ -13,18 +13,10 @@ int main(int argc, char **argv)
     bomberman_t *players;
     int num_players = 1;
     SDL_Texture *players_texture;
+    socket_info_t *socket_info;
 
-    game_init(&window, &renderer, &level001, &players, num_players, &players_texture);
-
-    // Init client
-    int socket;
-    struct sockaddr_in sin;
-    bmb_client_init(&sin, &socket, "127.0.0.1", 9999);
-
-    game_run(&window, &renderer, &level001, &players, num_players, &players_texture);
-
-    bmb_client_close(&socket);
-    SDL_Quit();
+    game_init(&window, &renderer, &level001, &players, num_players, &players_texture, socket_info);
+    game_run(&window, &renderer, &level001, &players, num_players, &players_texture, socket_info);
 
     return 0;
 }

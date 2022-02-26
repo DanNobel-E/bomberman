@@ -1,14 +1,17 @@
 #include <SDL.h>
+#include <time.h>
+#include <stdio.h>
 #include "bmb_bomberman.h"
 #include "bmb_level001.h"
 #include "bmb_client_udp.h"
 #include "png_parser.h"
 #include "bmp_parser.h"
 
-
 #define player(index) (*players_ptr)[index]
 
-void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bomberman_t **players_ptr, int num_players, SDL_Texture **players_texture)
+void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
+               bomberman_t **players_ptr, int num_players,
+               SDL_Texture **players_texture, socket_info_t *socket_info)
 {
     bmb_level_init(level, 8, 8, 64, level001_cells);
     level->cell_rect = (SDL_Rect){0, 0, level->cell_size, level->cell_size};
@@ -16,11 +19,11 @@ void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bom
     SDL_Init(SDL_INIT_VIDEO);
 
     *window = SDL_CreateWindow("Bomberman",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
-                              level->cols * level->cell_size,
-                              level->rows * level->cell_size,
-                              0);
+                               SDL_WINDOWPOS_CENTERED,
+                               SDL_WINDOWPOS_CENTERED,
+                               level->cols * level->cell_size,
+                               level->rows * level->cell_size,
+                               0);
 
     *renderer = SDL_CreateRenderer(*window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
@@ -55,9 +58,9 @@ void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bom
     *players_texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, player(0).texture_data.width, player(0).texture_data.height);
     SDL_SetTextureBlendMode(*players_texture, SDL_BLENDMODE_BLEND);
     SDL_UpdateTexture(*players_texture, NULL, player(0).texture_data.pixels, player(0).texture_data.width * 4);
-
     SDL_free(file_data);
 
+    bmb_client_init(&socket_info->sin, &socket_info->socket, "127.0.0.1", 9999);
 }
 
 void game_player_input(SDL_Event *event, movable_t *player_movable)
@@ -103,15 +106,27 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
     }
 }
 
-void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bomberman_t **players_ptr, int num_players, SDL_Texture **players_texture)
+void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
+              bomberman_t **players_ptr, int num_players,
+              SDL_Texture **players_texture, socket_info_t *socket_info)
 {
 
-  
+    socket_info->timer.prev_tick = SDL_GetPerformanceCounter();
+    socket_info->timer.duration = 1;
+    socket_info->timer.counter = socket_info->timer.duration;
+
+    time_t seed = time(NULL);
+    srand(seed);
+    packet_auth_t packet = bmb_packet_auth();
+    printf("id: %d auth: %d\n", packet.id, packet.auth);
+    bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet, sizeof(packet_auth_t));
+
     int running = 1;
     while (running)
     {
 
-        
+        socket_info->timer.current_tick = SDL_GetPerformanceCounter();
+        socket_info->timer.counter -= (double)(socket_info->timer.current_tick - socket_info->timer.prev_tick) / SDL_GetPerformanceFrequency();
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -125,7 +140,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bomb
         SDL_SetRenderDrawColor(*renderer, 0, 0, 0, 0);
         SDL_RenderClear(*renderer);
 
-        for (uint32_t row = 0; row <level->rows; row++)
+        for (uint32_t row = 0; row < level->rows; row++)
         {
             for (uint32_t col = 0; col < level->cols; col++)
             {
@@ -156,13 +171,21 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bomb
         player(0).player_rect.x = player(0).movable.x;
         player(0).player_rect.y = player(0).movable.y;
 
+        if (socket_info->timer.counter <= 0)
+        {
+            packet_position_t packet = bmb_packet_position(player(0).movable.x, player(0).movable.y);
+            bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet, sizeof(packet_position_t));
+            socket_info->timer.counter = socket_info->timer.duration;
+        }
+
         SDL_RenderCopy(*renderer, *players_texture, &player(0).texture_data.texture_rect, &player(0).player_rect);
 
         SDL_RenderPresent(*renderer);
+
+        socket_info->timer.prev_tick= socket_info->timer.current_tick;
     }
 
-
     SDL_free(player(0).texture_data.pixels);
-  
+    bmb_client_close(&socket_info->socket);
+    SDL_Quit();
 }
-
