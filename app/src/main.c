@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include "bmb_bomberman.h"
 #include "bmb_client_udp.h"
-#include "bmp_parser.h"
-#include "png_parser.h"
 #include "game.h"
 
 int main(int argc, char **argv)

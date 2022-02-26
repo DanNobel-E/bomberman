@@ -1,8 +1,10 @@
 #include <SDL.h>
 #include "bmb_bomberman.h"
 #include "bmb_level001.h"
+#include "bmb_client_udp.h"
 #include "png_parser.h"
 #include "bmp_parser.h"
+
 
 #define player(index) (*players_ptr)[index]
 
@@ -25,11 +27,11 @@ void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bom
     *players_ptr = (bomberman_t *)SDL_malloc(sizeof(bomberman_t) * num_players);
 
     Sint64 bmb_texture_size = 0;
-    png_open_file("./Sprites/Bomberman/Front/Bman_F_f00.png", &bmb_texture_size);
-    Uint8 *file_data = png_open_file("./Sprites/Bomberman/Front/Bman_F_f00.png", &bmb_texture_size);
+    png_open_file("./Sprites/Bomberman/Front/Bman_F_f00_pers.png", &bmb_texture_size);
+    Uint8 *file_data = png_open_file("./Sprites/Bomberman/Front/Bman_F_f00_pers.png", &bmb_texture_size);
 
-    //  bmp_open_file("./Sprites/ExplodableBlock.bmp", &bmb_texture_size);
-    //  Uint8 *file_data = bmp_open_file("./Sprites/ExplodableBlock.bmp", &bmb_texture_size);
+    //  bmp_open_file("./Sprites/Bomberman/Front/bomberman.bmp", &bmb_texture_size);
+    //  Uint8 *file_data = bmp_open_file("./Sprites/Bomberman/Front/bomberman.bmp", &bmb_texture_size);
 
     for (int i = 0; i < num_players; i++)
     {
@@ -104,9 +106,12 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
 void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level, bomberman_t **players_ptr, int num_players, SDL_Texture **players_texture)
 {
 
+  
     int running = 1;
     while (running)
     {
+
+        
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
