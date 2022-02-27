@@ -106,20 +106,49 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
     }
 }
 
+void game_quit(bomberman_t **players_ptr, socket_info_t *socket_info)
+{
+
+    SDL_free(player(0).texture_data.pixels);
+    SDL_free(*players_ptr);
+    bmb_client_close(&socket_info->socket);
+    SDL_Quit();
+}
+
 void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
               bomberman_t **players_ptr, int num_players,
               SDL_Texture **players_texture, socket_info_t *socket_info)
 {
 
+    // send authentication to server
+    time_t seed = time(NULL);
+    srand(seed);
+    packet_auth_t packet_auth = bmb_packet_auth(socket_info);
+    printf("id: %d auth: %d\n", packet_auth.id, packet_auth.auth);
+    bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet_auth, sizeof(packet_auth_t));
+
+    // wait for server response
+    packet_timer_t auth_check_timer = (packet_timer_t){0, 0, 1, 0};
+    auth_check_timer.counter = auth_check_timer.duration;
+    auth_check_timer.prev_tick = SDL_GetPerformanceCounter();
+
+
+    while (bmb_check_auth(socket_info))
+    {
+        auth_check_timer.current_tick = SDL_GetPerformanceCounter();
+        auth_check_timer.counter -= (double)(auth_check_timer.current_tick - auth_check_timer.prev_tick) / SDL_GetPerformanceFrequency();
+        if (auth_check_timer.counter <= 0)
+        {
+            game_quit(players_ptr, socket_info);
+            return;
+        }
+        auth_check_timer.prev_tick = auth_check_timer.current_tick;
+    }
+
+    // set packet timer
     socket_info->timer.prev_tick = SDL_GetPerformanceCounter();
     socket_info->timer.duration = 1;
     socket_info->timer.counter = socket_info->timer.duration;
-
-    time_t seed = time(NULL);
-    srand(seed);
-    packet_auth_t packet = bmb_packet_auth();
-    printf("id: %d auth: %d\n", packet.id, packet.auth);
-    bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet, sizeof(packet_auth_t));
 
     int running = 1;
     while (running)
@@ -173,8 +202,8 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
 
         if (socket_info->timer.counter <= 0)
         {
-            packet_position_t packet = bmb_packet_position(player(0).movable.x, player(0).movable.y);
-            bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet, sizeof(packet_position_t));
+            packet_position_t packet_pos = bmb_packet_position(player(0).movable.x, player(0).movable.y);
+            bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet_pos, sizeof(packet_position_t));
             socket_info->timer.counter = socket_info->timer.duration;
         }
 
@@ -182,10 +211,8 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
 
         SDL_RenderPresent(*renderer);
 
-        socket_info->timer.prev_tick= socket_info->timer.current_tick;
+        socket_info->timer.prev_tick = socket_info->timer.current_tick;
     }
 
-    SDL_free(player(0).texture_data.pixels);
-    bmb_client_close(&socket_info->socket);
-    SDL_Quit();
+    game_quit(players_ptr, socket_info);
 }

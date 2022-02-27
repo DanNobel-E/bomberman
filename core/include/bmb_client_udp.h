@@ -30,6 +30,7 @@ typedef struct socket_info
     int socket;
     struct sockaddr_in sin;
     packet_timer_t timer;
+    uint8_t auth;
 
 } socket_info_t;
 
@@ -54,7 +55,9 @@ int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, con
 
 void bmb_client_send_packet(const struct sockaddr_in *sin, const int *s, const char *data, const int data_lenght);
 
-packet_auth_t bmb_packet_auth();
+packet_auth_t bmb_packet_auth(socket_info_t *socket_info);
+
+int bmb_check_auth(socket_info_t *socket_info);
 
 packet_position_t bmb_packet_position(const float x, const float y);
 

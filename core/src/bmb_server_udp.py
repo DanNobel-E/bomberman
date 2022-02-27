@@ -1,58 +1,60 @@
-from http import server
+from ctypes import sizeof
 import socket
 import struct
+import time
+
+
 
 class Player:
-    
-    def __init__(self,signature):
-        self.signature= signature
-        self.position= (0,0)
-        
-    def update(self,x,y):
-        self.position= (x,y)
-        #print(self.signature,self.x,self.y)
-        
+
+    def __init__(self, signature):
+        self.signature = signature
+        self.position = (0, 0)
+
+    def update(self, x, y):
+        self.position = (x, y)
+        print(self.signature,self.position)
+
+
 class Server:
 
     def __init__(self, address='127.0.0.1', port=9999):
         self.address = address
         self.port = port
-        self.socket= socket.socket(socket.AF_INET,socket.SOCK_DGRAM,socket.IPPROTO_UDP)
-        self.socket.bind((address,port))
-        self.players= {}
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.socket.bind((self.address, self.port))
+        self.players = {}
         self.pk_ids = {
             'PK_AUTH_ID':  1,
             'PK_POS_ID': 2,
 
         }
-        
+
     def run_once(self):
         try:
-            packet, sender= self.socket.recv(64)
-            print(packet[0])
-            if len(packet) >16:
+            packet, sender = self.socket.recvfrom(64)
+            if len(packet) > 16:
                 raise Exception()
-            if packet[0] == self.pk_ids['PK_AUTH_ID']:
-                id,auth= struct.unpack('BB',packet)
+            packet_id = packet[0]
+            if packet_id == self.pk_ids['PK_AUTH_ID']:
+                auth_packet = struct.unpack('BB', packet)
                 if sender not in self.players:
-                    self.players[sender]= Player(sender)
-                print(auth)
-            if packet[0] == self.pk_ids['PK_POS_ID']:
-                id,x,y= struct.unpack('4Bff',packet)
-                self.players[sender].update(x,y)
+                    self.players[sender] = Player(sender)
+                    self.socket.sendto(packet,sender)
+            elif packet_id == self.pk_ids['PK_POS_ID']:
+                pos_packet = struct.unpack('I2f', packet)
+                if sender in self.players:
+                    self.players[sender].update(pos_packet[1],pos_packet[2])
         except:
             print('packet discarded')
+            
 
     def run(self):
         print('server running')
-        print(self.pk_ids['PK_AUTH_ID'])
-        
         while True:
             self.run_once()
 
-        
 
 if __name__ == '__main__':
     server = Server()
     server.run()
-

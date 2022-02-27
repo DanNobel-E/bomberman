@@ -13,3 +13,5 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
                 SDL_Texture **players_texture, socket_info_t *socket_info);
                 
 void game_player_input(SDL_Event *event, movable_t * player_movable);
+
+void game_quit(bomberman_t **players_ptr, socket_info_t *socket_info);
