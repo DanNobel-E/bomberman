@@ -1,3 +1,5 @@
+
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -9,6 +11,20 @@
 
 #include <stdio.h>
 #include "bmb_client_udp.h"
+
+int bmb_set_nb(int s)
+{
+#ifdef _WIN32
+    unsigned long nb_mode = 1;
+    return ioctlsocket(s, FIONBIO, &nb_mode);
+#else
+    int flags = fcntl(s, F_GETFL, 0);
+    if (flags < 0)
+        return flags;
+    flags |= O_NONBLOCK;
+    return fcntl(s, F_SETFL, flags);
+#endif
+}
 
 int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, const int port)
 {
@@ -32,6 +48,7 @@ int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, con
         return -1;
     }
 
+    set_nb(*s);
     printf("socket %d created\n", *s);
 
     inet_pton(AF_INET, ip_address, &sin->sin_addr);
@@ -56,15 +73,13 @@ packet_auth_t bmb_packet_auth(socket_info_t *socket_info)
 
 int bmb_check_auth(socket_info_t *socket_info)
 {
-    
-    char buffer[2];
-    int recv_bytes = recvfrom(socket_info->socket, buffer, 2, 0, (struct sockaddr*)&socket_info->sin,(int*)&socket_info->sin);
 
-    socket_info->sin.sin_family = AF_INET;
-    socket_info->sin.sin_port= htons(9999);
+    char buffer[2];
+    int recv_bytes = recv(socket_info->socket, buffer, 2, 0);
 
     if (recv_bytes > 0)
     {
+
         uint8_t id = buffer[0];
         uint8_t auth = buffer[1];
 

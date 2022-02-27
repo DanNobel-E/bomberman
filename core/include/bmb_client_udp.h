@@ -51,6 +51,8 @@ typedef struct packet_auth
 
 } packet_auth_t;
 
+int bmb_set_nb(int s);
+
 int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, const int port);
 
 void bmb_client_send_packet(const struct sockaddr_in *sin, const int *s, const char *data, const int data_lenght);
