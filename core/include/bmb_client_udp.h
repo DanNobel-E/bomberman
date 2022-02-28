@@ -10,11 +10,15 @@
 #endif
 
 #include <stdint.h>
+#include "double_linked_list.h"
+#include "double_list_item.h"
 #include "bmb_timer.h"
 
 #define PK_AUTH_ID 1
 #define PK_COL_ID 2
 #define PK_POS_ID 3
+#define PK_PLY_ID 4
+
 
 
 
@@ -28,6 +32,17 @@ typedef struct socket_info
     uint8_t auth;
 
 } socket_info_t;
+
+typedef struct packet_player
+{
+
+    uint8_t id;
+    uint8_t index;
+    float x;
+    float y;
+
+
+} packet_player_t;
 
 typedef struct packet_position
 {
@@ -72,6 +87,8 @@ int bmb_check_auth(socket_info_t *socket_info);
 packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b);
 
 int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color);
+
+int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr);
 
 packet_position_t bmb_packet_position(const float x, const float y);
 

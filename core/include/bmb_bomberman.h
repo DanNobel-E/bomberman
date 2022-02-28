@@ -81,3 +81,5 @@ int32_t bmb_move_on_level(level_t *level, movable_t *movable);
 int bmb_level_init(level_t *level, const uint32_t cols, const uint32_t rows, const uint32_t cell_size, int32_t *cells);
 // get the cell content at the specified coordinates
 int32_t bmb_level_cell(level_t *level, const uint32_t col, const uint32_t row);
+
+void bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32_t h, float speed,Uint8 *texture_data);

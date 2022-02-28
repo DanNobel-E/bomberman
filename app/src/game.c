@@ -4,8 +4,6 @@
 #include "game.h"
 #include "bmb_level001.h"
 
-
-
 void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
                player_item **players_ptr, int num_players,
                SDL_Texture **players_texture, socket_info_t *socket_info)
@@ -29,38 +27,20 @@ void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
     *players_ptr = item_new(player, player_item);
 
     Sint64 bmb_texture_size = 0;
-    Uint8 channels=0;
-    Uint32 pixel_format= 0;
+    Uint8 channels = 0;
+    Uint32 pixel_format = 0;
 
     png_open_file("./Sprites/Bomberman/Front/Bman_F_f00_pers.png", &bmb_texture_size);
     Uint8 *file_data = png_open_file("./Sprites/Bomberman/Front/Bman_F_f00_pers.png", &bmb_texture_size);
-    channels=4;
-    pixel_format= SDL_PIXELFORMAT_RGBA32;
+    channels = 4;
+    pixel_format = SDL_PIXELFORMAT_RGBA32;
 
     //  bmp_open_file("./Sprites/ExplodableBlock.bmp", &bmb_texture_size);
     //  Uint8 *file_data = bmp_open_file("./Sprites/ExplodableBlock.bmp", &bmb_texture_size);
     //  channels=3;
     //  pixel_format= SDL_PIXELFORMAT_BGR24;
 
-    for (int i = 0; i < num_players; i++)
-    {
-        player->movable.x = 100;
-        player->movable.y = 100;
-        player->movable.width = 32;
-        player->movable.height = 32;
-        player->movable.deltamove = (deltamove_t){0, 0, 0, 0};
-        player->movable.speed = 48;
-        player->player_rect = (SDL_Rect){0, 0, player->movable.width, player->movable.height};
-        player->texture_data.pixels = png_parse(file_data,
-                                                  &(player->texture_data.width),
-                                                  &(player->texture_data.height));
-
-        // player->texture_data.pixels = bmp_parse(file_data,
-        //                                 &player->texture_data.width,
-        //                                 &player->texture_data.height);
-
-        player->texture_data.texture_rect = (SDL_Rect){0, player->texture_data.height * 0.25f, player->texture_data.width, player->texture_data.height};
-    }
+    bmb_bomberman_init(player, 100, 100, 32, 32, 48, file_data);
 
     *players_texture = SDL_CreateTexture(*renderer, pixel_format, SDL_TEXTUREACCESS_STATIC, player->texture_data.width, player->texture_data.height);
     SDL_SetTextureBlendMode(*players_texture, SDL_BLENDMODE_BLEND);
@@ -116,10 +96,10 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
 void game_quit(player_item **players_ptr, socket_info_t *socket_info)
 {
 
-    player_item *player= dlist_get_element_at(players_ptr,0,player_item);
+    player_item *player = dlist_get_element_at(players_ptr, 0, player_item);
     SDL_free(player->object->texture_data.pixels);
     SDL_free(player->object);
-    dlist_destroy_item(&player,player_item);
+    dlist_destroy_item(&player, player_item);
     SDL_free(*players_ptr);
     bmb_client_close(&socket_info->socket);
     SDL_Quit();
@@ -130,7 +110,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
               SDL_Texture **players_texture, socket_info_t *socket_info)
 {
 
-    bomberman_t *player= dlist_get_element_at(players_ptr,0,player_item)->object;
+    bomberman_t *player = dlist_get_element_at(players_ptr, 0, player_item)->object;
 
     // send authentication to server
     time_t seed = time(NULL);
@@ -141,9 +121,9 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
 
     // wait for server response
     bmb_timer_t auth_check_timer;
-    bmb_timer_start(&auth_check_timer,1);
+    bmb_timer_start(&auth_check_timer, 1);
 
-
+    printf("hello");
     while (bmb_check_auth(socket_info))
     {
         bmb_timer_tick(&auth_check_timer);
@@ -156,8 +136,8 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
     }
 
     packet_color_t texture_color;
-    //wait for color assignement
-    while (bmb_check_color(socket_info,&texture_color))
+    // wait for color assignement
+    while (bmb_check_color(socket_info, &texture_color))
     {
         bmb_timer_tick(&auth_check_timer);
         if (!bmb_timer_stop(&auth_check_timer))
@@ -167,10 +147,10 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         }
         bmb_timer_update(&auth_check_timer);
     }
-    SDL_SetTextureColorMod(*players_texture,texture_color.r,texture_color.g,texture_color.b);
+    SDL_SetTextureColorMod(*players_texture, texture_color.r, texture_color.g, texture_color.b);
 
     // set packet timer
-    bmb_timer_start(&socket_info->timer,1);
+    bmb_timer_start(&socket_info->timer, 1);
 
     int running = 1;
     while (running)
@@ -216,7 +196,8 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
                 }
             }
         }
-
+        if (!bmb_check_new_player(socket_info, players_ptr))
+            printf("new player joined");
         bmb_move_on_level(level, &player->movable);
         player->player_rect.x = player->movable.x;
         player->player_rect.y = player->movable.y;
@@ -225,10 +206,13 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         {
             packet_position_t packet_pos = bmb_packet_position(player->movable.x, player->movable.y);
             bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet_pos, sizeof(packet_position_t));
-            
         }
 
-        SDL_RenderCopy(*renderer, *players_texture, &player->texture_data.texture_rect, &player->player_rect);
+        for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
+        {
+            bomberman_t *p = dlist_get_element_at(players_ptr, i, player_item)->object;
+            SDL_RenderCopy(*renderer, *players_texture, &p->texture_data.texture_rect, &p->player_rect);
+        }
 
         SDL_RenderPresent(*renderer);
 

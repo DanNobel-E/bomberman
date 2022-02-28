@@ -93,7 +93,7 @@ int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color)
             uint8_t r = buffer[1];
             uint8_t g = buffer[2];
             uint8_t b = buffer[3];
-            *packet_color= bmb_packet_color(r,g,b);
+            *packet_color = bmb_packet_color(r, g, b);
             return 0;
         }
     }
@@ -118,6 +118,35 @@ int bmb_check_auth(socket_info_t *socket_info)
 
             if (auth == socket_info->auth)
                 return 0;
+        }
+    }
+
+    return -1;
+}
+
+int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr)
+{
+
+    char buffer[12];
+    int recv_bytes = recv(socket_info->socket, buffer, 12, 0);
+
+    if (recv_bytes > 0)
+    {
+
+        uint8_t id = buffer[0];
+
+        if (id == PK_PLY_ID)
+        {
+            float x = ((float *)buffer)[1];
+            float y = ((float *)buffer)[2];
+
+            // uint8_t index = buffer[1];
+            bomberman_t *new_player = SDL_malloc(sizeof(bomberman_t));
+            bmb_bomberman_init(new_player, x, y, 32, 32, 48, dlist_get_element_at(players_ptr, 0, player_item)->object->texture_data.pixels);    
+            player_item *new_p_item = item_new(new_player, player_item);
+            dlist_append(players_ptr, new_p_item, player_item);
+
+            return 0;
         }
     }
 

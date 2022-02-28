@@ -8,6 +8,7 @@
 int main(int argc, char **argv)
 {
     // init game
+
     SDL_Window *window;
     SDL_Renderer *renderer;
     level_t level001;
