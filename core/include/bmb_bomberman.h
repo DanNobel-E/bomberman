@@ -39,10 +39,11 @@ typedef struct movable
 
 typedef struct texture_data
 {
+    SDL_Texture *texture;
     uint8_t *pixels;
+    SDL_Rect texture_rect;
     uint32_t width;
     uint32_t height;
-    SDL_Rect texture_rect;
 } texture_data_t;
 
 typedef struct bomberman
@@ -82,4 +83,6 @@ int bmb_level_init(level_t *level, const uint32_t cols, const uint32_t rows, con
 // get the cell content at the specified coordinates
 int32_t bmb_level_cell(level_t *level, const uint32_t col, const uint32_t row);
 
-void bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32_t h, float speed,Uint8 *texture_data);
+void bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32_t h, float speed, Uint8 *texture_data, Uint8 *pixel_copy);
+
+int bmb_bomberman_init_texture(bomberman_t *player, SDL_Renderer *renderer, uint32_t pixel_format, uint8_t channels);

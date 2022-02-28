@@ -15,7 +15,7 @@ class Player:
 
     def update(self, x, y):
         self.position = (x, y)
-        print(self.signature,self.position)
+        #print(self.signature,self.position)
 
 
 class Server:
@@ -55,6 +55,7 @@ class Server:
                                                        0,0,
                                                        self.players[player].position[0],self.players[player].position[1])
                             self.socket.sendto(packet_player,sender)
+                            print(player, "to", sender)
             elif packet_id == self.pk_ids['PK_POS_ID']:
                 pos_packet = struct.unpack('I2f', packet)
                 if sender in self.players:

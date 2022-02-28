@@ -1,5 +1,3 @@
-
-
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -29,6 +27,7 @@ int bmb_set_nb(int s)
 int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, const int port)
 {
 
+
 #ifdef _WIN32
 
     WSADATA wsa_data;
@@ -41,7 +40,9 @@ int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, con
 
 #endif
 
+    printf("ciao\n");
     *s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    
     if (*s < 0)
     {
         printf("unable to initialize the UDP socket\n");
@@ -62,7 +63,6 @@ void bmb_client_send_packet(const struct sockaddr_in *sin, const int *s, const c
 {
 
     int sent_bytes = sendto(*s, data, data_lenght, 0, (struct sockaddr *)sin, sizeof(*sin));
-    printf("sent %d bytes via UDP\n", sent_bytes);
 }
 
 packet_auth_t bmb_packet_auth(socket_info_t *socket_info)
@@ -80,7 +80,7 @@ int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color)
 {
 
     char buffer[4];
-    int recv_bytes = recv(socket_info->socket, buffer, 4, 0);
+    int recv_bytes = recv(socket_info->s, buffer, 4, 0);
 
     if (recv_bytes > 0)
     {
@@ -105,7 +105,7 @@ int bmb_check_auth(socket_info_t *socket_info)
 {
 
     char buffer[2];
-    int recv_bytes = recv(socket_info->socket, buffer, 2, 0);
+    int recv_bytes = recv(socket_info->s, buffer, 2, 0);
 
     if (recv_bytes > 0)
     {
@@ -124,11 +124,11 @@ int bmb_check_auth(socket_info_t *socket_info)
     return -1;
 }
 
-int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr)
+int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer)
 {
 
     char buffer[12];
-    int recv_bytes = recv(socket_info->socket, buffer, 12, 0);
+    int recv_bytes = recv(socket_info->s, buffer, 12, 0);
 
     if (recv_bytes > 0)
     {
@@ -142,7 +142,8 @@ int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr)
 
             // uint8_t index = buffer[1];
             bomberman_t *new_player = SDL_malloc(sizeof(bomberman_t));
-            bmb_bomberman_init(new_player, x, y, 32, 32, 48, dlist_get_element_at(players_ptr, 0, player_item)->object->texture_data.pixels);    
+            bmb_bomberman_init(new_player, x, y, 32, 32, 48, NULL, dlist_get_element_at(players_ptr, 0, player_item)->object->texture_data.pixels);    
+            bmb_bomberman_init_texture(new_player,renderer, SDL_PIXELFORMAT_RGBA32,4);
             player_item *new_p_item = item_new(new_player, player_item);
             dlist_append(players_ptr, new_p_item, player_item);
 

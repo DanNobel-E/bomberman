@@ -26,7 +26,7 @@
 typedef struct socket_info
 {
 
-    int socket;
+    int s;
     struct sockaddr_in sin;
     bmb_timer_t timer;
     uint8_t auth;
@@ -88,7 +88,7 @@ packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b);
 
 int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color);
 
-int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr);
+int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer);
 
 packet_position_t bmb_packet_position(const float x, const float y);
 
