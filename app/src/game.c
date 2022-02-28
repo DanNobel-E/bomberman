@@ -1,18 +1,16 @@
 #include <SDL.h>
 #include <time.h>
 #include <stdio.h>
-#include "bmb_bomberman.h"
+#include "game.h"
 #include "bmb_level001.h"
-#include "bmb_client_udp.h"
-#include "png_parser.h"
-#include "bmp_parser.h"
 
-#define player(index) (*players_ptr)[index]
+
 
 void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
-               bomberman_t **players_ptr, int num_players,
+               player_item **players_ptr, int num_players,
                SDL_Texture **players_texture, socket_info_t *socket_info)
 {
+
     bmb_level_init(level, 8, 8, 64, level001_cells);
     level->cell_rect = (SDL_Rect){0, 0, level->cell_size, level->cell_size};
 
@@ -27,7 +25,8 @@ void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
 
     *renderer = SDL_CreateRenderer(*window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-    *players_ptr = (bomberman_t *)SDL_malloc(sizeof(bomberman_t) * num_players);
+    bomberman_t *player = (bomberman_t *)SDL_malloc(sizeof(bomberman_t));
+    *players_ptr = item_new(player, player_item);
 
     Sint64 bmb_texture_size = 0;
     png_open_file("./Sprites/Bomberman/Front/Bman_F_f00_pers.png", &bmb_texture_size);
@@ -38,26 +37,26 @@ void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
 
     for (int i = 0; i < num_players; i++)
     {
-        player(i).movable.x = 100;
-        player(i).movable.y = 100;
-        player(i).movable.width = 32;
-        player(i).movable.height = 32;
-        player(i).movable.deltamove = (deltamove_t){0, 0, 0, 0};
-        player(i).movable.speed = 48;
-        player(i).player_rect = (SDL_Rect){0, 0, player(i).movable.width, player(i).movable.height};
-        player(i).texture_data.pixels = png_parse(file_data,
-                                                  &(player(i).texture_data.width),
-                                                  &(player(i).texture_data.height));
-        player(i).texture_data.texture_rect = (SDL_Rect){0, player(i).texture_data.height * 0.25f, player(i).texture_data.width, player(i).texture_data.height};
+        player->movable.x = 100;
+        player->movable.y = 100;
+        player->movable.width = 32;
+        player->movable.height = 32;
+        player->movable.deltamove = (deltamove_t){0, 0, 0, 0};
+        player->movable.speed = 48;
+        player->player_rect = (SDL_Rect){0, 0, player->movable.width, player->movable.height};
+        player->texture_data.pixels = png_parse(file_data,
+                                                  &(player->texture_data.width),
+                                                  &(player->texture_data.height));
+        player->texture_data.texture_rect = (SDL_Rect){0, player->texture_data.height * 0.25f, player->texture_data.width, player->texture_data.height};
 
         // (*players_ptr)[i].texture_data.pixels = bmp_parse(file_data,
         //                                                     &((*players_ptr)[i].texture_data.width),
         //                                                     &((*players_ptr)[i].texture_data.height));
     }
 
-    *players_texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, player(0).texture_data.width, player(0).texture_data.height);
+    *players_texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, player->texture_data.width, player->texture_data.height);
     SDL_SetTextureBlendMode(*players_texture, SDL_BLENDMODE_BLEND);
-    SDL_UpdateTexture(*players_texture, NULL, player(0).texture_data.pixels, player(0).texture_data.width * 4);
+    SDL_UpdateTexture(*players_texture, NULL, player->texture_data.pixels, player->texture_data.width * 4);
     SDL_free(file_data);
 
     bmb_client_init(&socket_info->sin, &socket_info->socket, "127.0.0.1", 9999);
@@ -106,19 +105,24 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
     }
 }
 
-void game_quit(bomberman_t **players_ptr, socket_info_t *socket_info)
+void game_quit(player_item **players_ptr, socket_info_t *socket_info)
 {
 
-    SDL_free(player(0).texture_data.pixels);
+    player_item *player= dlist_get_element_at(players_ptr,0,player_item);
+    SDL_free(player->object->texture_data.pixels);
+    SDL_free(player->object);
+    dlist_destroy_item(&player,player_item);
     SDL_free(*players_ptr);
     bmb_client_close(&socket_info->socket);
     SDL_Quit();
 }
 
 void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
-              bomberman_t **players_ptr, int num_players,
+              player_item **players_ptr, int num_players,
               SDL_Texture **players_texture, socket_info_t *socket_info)
 {
+
+    bomberman_t *player= dlist_get_element_at(players_ptr,0,player_item)->object;
 
     // send authentication to server
     time_t seed = time(NULL);
@@ -128,34 +132,31 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
     bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet_auth, sizeof(packet_auth_t));
 
     // wait for server response
-    packet_timer_t auth_check_timer = (packet_timer_t){0, 0, 1, 0};
-    auth_check_timer.counter = auth_check_timer.duration;
-    auth_check_timer.prev_tick = SDL_GetPerformanceCounter();
+    bmb_timer_t auth_check_timer;
+    bmb_timer_start(&auth_check_timer,1);
 
 
     while (bmb_check_auth(socket_info))
     {
-        auth_check_timer.current_tick = SDL_GetPerformanceCounter();
-        auth_check_timer.counter -= (double)(auth_check_timer.current_tick - auth_check_timer.prev_tick) / SDL_GetPerformanceFrequency();
-        if (auth_check_timer.counter <= 0)
+        bmb_timer_tick(&auth_check_timer);
+        if (!bmb_timer_stop(&auth_check_timer))
         {
             game_quit(players_ptr, socket_info);
             return;
         }
-        auth_check_timer.prev_tick = auth_check_timer.current_tick;
+        bmb_timer_update(&auth_check_timer);
     }
 
+    //wait for color assignement
+
     // set packet timer
-    socket_info->timer.prev_tick = SDL_GetPerformanceCounter();
-    socket_info->timer.duration = 1;
-    socket_info->timer.counter = socket_info->timer.duration;
+    bmb_timer_start(&socket_info->timer,1);
 
     int running = 1;
     while (running)
     {
 
-        socket_info->timer.current_tick = SDL_GetPerformanceCounter();
-        socket_info->timer.counter -= (double)(socket_info->timer.current_tick - socket_info->timer.prev_tick) / SDL_GetPerformanceFrequency();
+        bmb_timer_tick(&socket_info->timer);
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -163,7 +164,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
                 running = 0;
 
             // Input
-            game_player_input(&event, &(player(0).movable));
+            game_player_input(&event, &(player->movable));
         }
 
         SDL_SetRenderDrawColor(*renderer, 0, 0, 0, 0);
@@ -196,22 +197,22 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
             }
         }
 
-        bmb_move_on_level(level, &player(0).movable);
-        player(0).player_rect.x = player(0).movable.x;
-        player(0).player_rect.y = player(0).movable.y;
+        bmb_move_on_level(level, &player->movable);
+        player->player_rect.x = player->movable.x;
+        player->player_rect.y = player->movable.y;
 
-        if (socket_info->timer.counter <= 0)
+        if (!bmb_timer_stop(&socket_info->timer))
         {
-            packet_position_t packet_pos = bmb_packet_position(player(0).movable.x, player(0).movable.y);
+            packet_position_t packet_pos = bmb_packet_position(player->movable.x, player->movable.y);
             bmb_client_send_packet(&socket_info->sin, &socket_info->socket, (char *)&packet_pos, sizeof(packet_position_t));
-            socket_info->timer.counter = socket_info->timer.duration;
+            
         }
 
-        SDL_RenderCopy(*renderer, *players_texture, &player(0).texture_data.texture_rect, &player(0).player_rect);
+        SDL_RenderCopy(*renderer, *players_texture, &player->texture_data.texture_rect, &player->player_rect);
 
         SDL_RenderPresent(*renderer);
 
-        socket_info->timer.prev_tick = socket_info->timer.current_tick;
+        bmb_timer_update(&socket_info->timer);
     }
 
     game_quit(players_ptr, socket_info);

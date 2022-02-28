@@ -10,26 +10,19 @@
 #endif
 
 #include <stdint.h>
+#include "bmb_timer.h"
 
 #define PK_AUTH_ID 1
 #define PK_POS_ID 2
 
-typedef struct packet_timer
-{
-    uint64_t current_tick;
-    uint64_t prev_tick;
-    uint64_t duration;
-    double counter;
-    
 
-}packet_timer_t;
 
 typedef struct socket_info
 {
 
     int socket;
     struct sockaddr_in sin;
-    packet_timer_t timer;
+    bmb_timer_t timer;
     uint8_t auth;
 
 } socket_info_t;

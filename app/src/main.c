@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <stdio.h>
+#include "double_list_item.h"
 #include "bmb_bomberman.h"
 #include "bmb_client_udp.h"
 #include "game.h"
@@ -10,7 +11,7 @@ int main(int argc, char **argv)
     SDL_Window *window;
     SDL_Renderer *renderer;
     level_t level001;
-    bomberman_t *players;
+    player_item *players;
     int num_players = 1;
     SDL_Texture *players_texture;
     socket_info_t *socket_info;
