@@ -1,4 +1,5 @@
 from ctypes import sizeof
+import random
 import socket
 import struct
 import time
@@ -26,7 +27,8 @@ class Server:
         self.players = {}
         self.pk_ids = {
             'PK_AUTH_ID':  1,
-            'PK_POS_ID': 2,
+            'PK_COL_ID':  2,
+            'PK_POS_ID': 3,
 
         }
 
@@ -41,6 +43,9 @@ class Server:
                 if sender not in self.players:
                     self.players[sender] = Player(sender)
                     self.socket.sendto(packet,sender)
+                    r,g, b=random.randbytes(3)
+                    packet_color= struct.pack("BBBB", self.pk_ids['PK_COL_ID'],r,g,b)
+                    self.socket.sendto(packet_color,sender)
             elif packet_id == self.pk_ids['PK_POS_ID']:
                 pos_packet = struct.unpack('I2f', packet)
                 if sender in self.players:
@@ -51,6 +56,7 @@ class Server:
 
     def run(self):
         print('server running')
+        random.seed()
         while True:
             self.run_once()
 

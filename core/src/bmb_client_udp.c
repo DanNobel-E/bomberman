@@ -71,6 +71,36 @@ packet_auth_t bmb_packet_auth(socket_info_t *socket_info)
     return (packet_auth_t){PK_AUTH_ID, socket_info->auth};
 }
 
+packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b)
+{
+    return (packet_color_t){PK_COL_ID, r, g, b};
+}
+
+int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color)
+{
+
+    char buffer[4];
+    int recv_bytes = recv(socket_info->socket, buffer, 4, 0);
+
+    if (recv_bytes > 0)
+    {
+
+        uint8_t id = buffer[0];
+
+        if (id == PK_COL_ID)
+        {
+
+            uint8_t r = buffer[1];
+            uint8_t g = buffer[2];
+            uint8_t b = buffer[3];
+            *packet_color= bmb_packet_color(r,g,b);
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 int bmb_check_auth(socket_info_t *socket_info)
 {
 

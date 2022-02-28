@@ -13,7 +13,9 @@
 #include "bmb_timer.h"
 
 #define PK_AUTH_ID 1
-#define PK_POS_ID 2
+#define PK_COL_ID 2
+#define PK_POS_ID 3
+
 
 
 
@@ -36,6 +38,19 @@ typedef struct packet_position
 
 } packet_position_t;
 
+
+
+typedef struct packet_color
+{
+
+    uint8_t id;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+
+
+} packet_color_t;
+
 typedef struct packet_auth
 {
 
@@ -53,6 +68,10 @@ void bmb_client_send_packet(const struct sockaddr_in *sin, const int *s, const c
 packet_auth_t bmb_packet_auth(socket_info_t *socket_info);
 
 int bmb_check_auth(socket_info_t *socket_info);
+
+packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b);
+
+int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color);
 
 packet_position_t bmb_packet_position(const float x, const float y);
 
