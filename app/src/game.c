@@ -94,14 +94,22 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
     }
 }
 
-void game_quit(player_item **players_ptr, socket_info_t *socket_info)
+void game_quit(player_item **players_ptr,  texture_data_t **players_texture, socket_info_t *socket_info)
 {
 
-    player_item *player = dlist_get_element_at(players_ptr, 0, player_item);
-    SDL_free(player->object->texture_data->pixels);
-    SDL_free(player->object);
-    dlist_destroy_item(&player, player_item);
+    SDL_free((*players_texture)->pixels);
+    SDL_free(*players_texture);
+    *players_texture=NULL;
+
+    for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
+    {
+        player_item *player = dlist_get_element_at(players_ptr, i, player_item);
+        SDL_free(player->object);
+        dlist_remove(players_ptr, player, player_item);
+        dlist_destroy_item(&player, player_item);
+    }
     SDL_free(*players_ptr);
+    *players_ptr=NULL;
     bmb_client_close(&socket_info->s);
     SDL_Quit();
 }
@@ -147,7 +155,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         }
         bmb_timer_update(&auth_check_timer);
     }
-    bmb_bomberman_set_color(player,player_color.r,player_color.g,player_color.b,255);
+    bmb_bomberman_set_color(player, player_color.r, player_color.g, player_color.b, 255);
 
     // set packet timer
     bmb_timer_start(&socket_info->timer, 1);
@@ -163,6 +171,11 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
             if (event.type == SDL_QUIT)
                 running = 0;
 
+            if (event->type == SDLK_ESCAPE)
+            {
+                game_quit(players_ptr, socket_info)
+                    running = 0;
+            }
             // Input
             game_player_input(&event, &(player->movable));
         }
@@ -206,8 +219,10 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
 
         if (!bmb_timer_stop(&socket_info->timer))
         {
-            packet_position_t packet_pos = bmb_packet_position(player->movable.x, player->movable.y);
+            packet_position_t packet_pos = bmb_packet_position(player, player->movable.x, player->movable.y);
             bmb_client_send_packet(&socket_info->sin, &socket_info->s, (char *)&packet_pos, sizeof(packet_position_t));
+
+            bmb_check_position(socket_info, players_ptr, player);
         }
 
         for (int i = 0; i < dlist_count(players_ptr, player_item); i++)

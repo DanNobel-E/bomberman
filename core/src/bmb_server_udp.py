@@ -26,7 +26,7 @@ class Player:
         now=time.time()
         self.position = (x, y)
         self.last_update=time.time()
-        #print(self.signature,self.position)
+        print(self.signature,self.position)
 
 
 class Server:
@@ -44,15 +44,13 @@ class Server:
             'PK_COL_ID':  2,
             'PK_POS_ID': 3,
             'PK_PLY_ID': 4,
-            
-
         }
 
     def run_once(self):
         try:
             packet, sender = self.socket.recvfrom(64)
-            if len(packet) > 16:
-                raise Exception()
+            if len(packet) > 20:
+                raise InvalidPacketSize()
             if sender is not self.players or self.players[sender] is not None:
                 self.check_dos_attack(sender)     
                 self.read_current_packet(packet,sender)
@@ -88,13 +86,15 @@ class Server:
     
     def send_new_player_info(self, new_player):
         for player in self.players:
-            if(player!= new_player):
-                packet_to_player= struct.pack("4B2f",self.pk_ids['PK_PLY_ID'], self.players[new_player].color[0],
+            if player!= new_player:
+                packet_to_player= struct.pack("4B2f4B",self.pk_ids['PK_PLY_ID'], self.players[new_player].color[0],
                                                 self.players[new_player].color[1],self.players[new_player].color[2],
-                                                self.players[new_player].position[0],self.players[new_player].position[1])
-                packet_to_new_player= struct.pack("4B2f",self.pk_ids['PK_PLY_ID'], self.players[player].color[0],
+                                                self.players[new_player].position[0],self.players[new_player].position[1],
+                                                self.players[new_player].index,0,0,0)
+                packet_to_new_player= struct.pack("4B2f4B",self.pk_ids['PK_PLY_ID'], self.players[player].color[0],
                                                 self.players[player].color[1],self.players[player].color[2],
-                                                self.players[player].position[0],self.players[player].position[1])
+                                                self.players[player].position[0],self.players[player].position[1],
+                                                self.players[player].index, 0,0,0)
                 self.socket.sendto(packet_to_player,player)
                 self.socket.sendto(packet_to_new_player,new_player)
 
@@ -120,11 +120,16 @@ class Server:
                 self.players[sender].update(x,y)
                 self.broadcast_position(sender,x,y)
                 
+                
     def broadcast_position(self,sender, x, y):
-        for player in self.players:
-            if self.players[player] is not None:
-                if player!=sender:
-                    self.socket.sendto(struct.pack())
+        for signature in self.players:
+            if self.players[signature] is not None:
+                if signature!=sender:
+                    p_packet= struct.pack('BBBB2f',self.pk_ids['PK_POS_ID'],
+                                          self.players[sender].index,
+                                          0,0,x,y)
+                    self.socket.sendto(p_packet,signature)
+                    
 
 if __name__ == '__main__':
     server = Server()

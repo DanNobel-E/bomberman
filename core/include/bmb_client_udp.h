@@ -43,6 +43,7 @@ typedef struct packet_player
     uint8_t b;
     float x;
     float y;
+    uint8_t index;
 
 
 } packet_player_t;
@@ -51,6 +52,7 @@ typedef struct packet_position
 {
 
     uint8_t id;
+    uint8_t index;
     float x;
     float y;
 
@@ -95,6 +97,8 @@ int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color);
 
 int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer, texture_data_t *players_texture);
 
-packet_position_t bmb_packet_position(const float x, const float y);
+packet_position_t bmb_packet_position(bomberman_t *player, const float x, const float y);
+
+int bmb_check_position(socket_info_t *socket_info, player_item **players_ptr, bomberman_t *player);
 
 void bmb_client_close(int *s);
