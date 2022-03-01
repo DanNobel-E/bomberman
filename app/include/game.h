@@ -11,11 +11,11 @@
 
 void game_init(SDL_Window **window, SDL_Renderer **renderer, level_t *level, 
                 player_item **players_ptr, int num_players, 
-                SDL_Texture **players_texture, socket_info_t *socket_info);
+                texture_data_t **players_texture, socket_info_t *socket_info);
 
 void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level, 
                 player_item **players_ptr, int num_players, 
-                SDL_Texture **players_texture, socket_info_t *socket_info);
+                texture_data_t **players_texture, socket_info_t *socket_info);
                 
 void game_player_input(SDL_Event *event, movable_t * player_movable);
 

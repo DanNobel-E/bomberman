@@ -10,6 +10,7 @@
 #endif
 
 #include <stdint.h>
+#include "bmb_bomberman.h"
 #include "double_linked_list.h"
 #include "double_list_item.h"
 #include "bmb_timer.h"
@@ -88,7 +89,7 @@ packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b);
 
 int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color);
 
-int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer);
+int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer, texture_data_t *players_texture);
 
 packet_position_t bmb_packet_position(const float x, const float y);
 

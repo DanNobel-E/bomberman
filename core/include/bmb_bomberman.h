@@ -52,7 +52,7 @@ typedef struct bomberman
     uint32_t number_of_bombs;
     uint32_t dropped_bombs;
     uint32_t bomb_power;
-    texture_data_t texture_data;
+    texture_data_t *texture_data;
     SDL_Rect player_rect;
 } bomberman_t;
 
@@ -83,6 +83,6 @@ int bmb_level_init(level_t *level, const uint32_t cols, const uint32_t rows, con
 // get the cell content at the specified coordinates
 int32_t bmb_level_cell(level_t *level, const uint32_t col, const uint32_t row);
 
-void bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32_t h, float speed, Uint8 *texture_data, Uint8 *pixel_copy);
+int bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32_t h, float speed, Uint8 *file_data, texture_data_t *texture_data, int copy);
 
-int bmb_bomberman_init_texture(bomberman_t *player, SDL_Renderer *renderer, uint32_t pixel_format, uint8_t channels);
+int bmb_bomberman_init_texture(texture_data_t *texture_data, SDL_Renderer *renderer, uint32_t pixel_format, uint8_t channels);

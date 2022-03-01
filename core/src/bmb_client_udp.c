@@ -27,7 +27,6 @@ int bmb_set_nb(int s)
 int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, const int port)
 {
 
-
 #ifdef _WIN32
 
     WSADATA wsa_data;
@@ -40,9 +39,8 @@ int bmb_client_init(struct sockaddr_in *sin, int *s, const char *ip_address, con
 
 #endif
 
-    printf("ciao\n");
     *s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    
+
     if (*s < 0)
     {
         printf("unable to initialize the UDP socket\n");
@@ -124,7 +122,7 @@ int bmb_check_auth(socket_info_t *socket_info)
     return -1;
 }
 
-int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer)
+int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer, texture_data_t *players_texture)
 {
 
     char buffer[12];
@@ -142,8 +140,7 @@ int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, 
 
             // uint8_t index = buffer[1];
             bomberman_t *new_player = SDL_malloc(sizeof(bomberman_t));
-            bmb_bomberman_init(new_player, x, y, 32, 32, 48, NULL, dlist_get_element_at(players_ptr, 0, player_item)->object->texture_data.pixels);    
-            bmb_bomberman_init_texture(new_player,renderer, SDL_PIXELFORMAT_RGBA32,4);
+            bmb_bomberman_init(new_player, x, y, 32, 32, 48, NULL, players_texture, 1);
             player_item *new_p_item = item_new(new_player, player_item);
             dlist_append(players_ptr, new_p_item, player_item);
 
