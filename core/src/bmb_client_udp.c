@@ -66,7 +66,7 @@ void bmb_client_send_packet(const struct sockaddr_in *sin, const int *s, const c
 packet_auth_t bmb_packet_auth(socket_info_t *socket_info)
 {
     socket_info->auth = (uint8_t)rand();
-    return (packet_auth_t){PK_AUTH_ID, socket_info->auth};
+    return (packet_auth_t){PK_AUTH_ID, socket_info->auth, 0};
 }
 
 packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b)
@@ -99,23 +99,29 @@ int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color)
     return -1;
 }
 
-int bmb_check_auth(socket_info_t *socket_info)
+int bmb_check_auth(bomberman_t *player, socket_info_t *socket_info)
 {
 
-    char buffer[2];
-    int recv_bytes = recv(socket_info->s, buffer, 2, 0);
+    char buffer[3];
+    int recv_bytes = recv(socket_info->s, buffer, 3, 0);
 
     if (recv_bytes > 0)
     {
 
         uint8_t id = buffer[0];
-        uint8_t auth = buffer[1];
 
         if (id == PK_AUTH_ID)
         {
 
+            uint8_t auth = buffer[1];
+
             if (auth == socket_info->auth)
+            {
+            uint8_t index = buffer[2];
+            player->index=index;
+
                 return 0;
+            }
         }
     }
 

@@ -124,7 +124,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
     bmb_timer_t auth_check_timer;
     bmb_timer_start(&auth_check_timer, 1);
 
-    while (bmb_check_auth(socket_info))
+    while (bmb_check_auth(player, socket_info))
     {
         bmb_timer_tick(&auth_check_timer);
         if (!bmb_timer_stop(&auth_check_timer))

@@ -74,6 +74,8 @@ typedef struct packet_auth
 
     uint8_t id;
     uint8_t auth;
+    uint8_t index;
+
 
 } packet_auth_t;
 
@@ -85,7 +87,7 @@ void bmb_client_send_packet(const struct sockaddr_in *sin, const int *s, const c
 
 packet_auth_t bmb_packet_auth(socket_info_t *socket_info);
 
-int bmb_check_auth(socket_info_t *socket_info);
+int bmb_check_auth(bomberman_t *player, socket_info_t *socket_info);
 
 packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b);
 

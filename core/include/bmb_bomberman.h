@@ -64,6 +64,7 @@ typedef struct bomberman
     texture_data_t *texture_data;
     SDL_Rect player_rect;
     color_t color;
+    uint8_t index;
 } bomberman_t;
 
 /*
