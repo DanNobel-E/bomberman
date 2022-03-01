@@ -135,9 +135,9 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         bmb_timer_update(&auth_check_timer);
     }
 
-    packet_color_t texture_color;
+    packet_color_t player_color;
     // wait for color assignement
-    while (bmb_check_color(socket_info, &texture_color))
+    while (bmb_check_color(socket_info, &player_color))
     {
         bmb_timer_tick(&auth_check_timer);
         if (!bmb_timer_stop(&auth_check_timer))
@@ -147,7 +147,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         }
         bmb_timer_update(&auth_check_timer);
     }
-    SDL_SetTextureColorMod(player->texture_data->texture, texture_color.r, texture_color.g, texture_color.b);
+    bmb_bomberman_set_color(player,player_color.r,player_color.g,player_color.b,255);
 
     // set packet timer
     bmb_timer_start(&socket_info->timer, 1);
@@ -213,6 +213,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
         {
             bomberman_t *p = dlist_get_element_at(players_ptr, i, player_item)->object;
+            SDL_SetTextureColorMod(p->texture_data->texture, p->color.r, p->color.g, p->color.b);
             SDL_RenderCopy(*renderer, p->texture_data->texture, &p->texture_data->texture_rect, &p->player_rect);
         }
 

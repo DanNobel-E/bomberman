@@ -12,7 +12,7 @@ int bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32
     player->movable.deltamove = (deltamove_t){0, 0, 0, 0};
     player->movable.speed = speed;
     player->player_rect = (SDL_Rect){player->movable.x, player->movable.y, player->movable.width, player->movable.height};
-    
+
     if (!copy)
     {
         if (!file_data)
@@ -27,7 +27,6 @@ int bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32
         //                                 &player->texture_data.height);
         texture_data->texture_rect = (SDL_Rect){0, texture_data->height * 0.25f, texture_data->width, texture_data->height};
         player->texture_data = texture_data;
-
     }
     else
     {
@@ -48,4 +47,13 @@ int bmb_bomberman_init_texture(texture_data_t *texture_data, SDL_Renderer *rende
     SDL_UpdateTexture(texture_data->texture, NULL, texture_data->pixels, texture_data->width * channels);
 
     return 0;
+}
+
+void bmb_bomberman_set_color(bomberman_t *player, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+
+    player->color.r = r;
+    player->color.g = g;
+    player->color.b = b;
+    player->color.a = a;
 }

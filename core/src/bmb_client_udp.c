@@ -135,12 +135,16 @@ int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, 
 
         if (id == PK_PLY_ID)
         {
+            uint8_t r = buffer[1];
+            uint8_t g = buffer[2];
+            uint8_t b = buffer[3];
+
             float x = ((float *)buffer)[1];
             float y = ((float *)buffer)[2];
 
-            // uint8_t index = buffer[1];
             bomberman_t *new_player = SDL_malloc(sizeof(bomberman_t));
             bmb_bomberman_init(new_player, x, y, 32, 32, 48, NULL, players_texture, 1);
+            bmb_bomberman_set_color(new_player, r, g, b, 255);
             player_item *new_p_item = item_new(new_player, player_item);
             dlist_append(players_ptr, new_p_item, player_item);
 

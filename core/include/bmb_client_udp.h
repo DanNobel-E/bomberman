@@ -38,7 +38,9 @@ typedef struct packet_player
 {
 
     uint8_t id;
-    uint8_t index;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
     float x;
     float y;
 

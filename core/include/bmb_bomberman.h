@@ -46,6 +46,15 @@ typedef struct texture_data
     uint32_t height;
 } texture_data_t;
 
+typedef struct color
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+
+} color_t;
+
 typedef struct bomberman
 {
     movable_t movable;
@@ -54,6 +63,7 @@ typedef struct bomberman
     uint32_t bomb_power;
     texture_data_t *texture_data;
     SDL_Rect player_rect;
+    color_t color;
 } bomberman_t;
 
 /*
@@ -86,3 +96,5 @@ int32_t bmb_level_cell(level_t *level, const uint32_t col, const uint32_t row);
 int bmb_bomberman_init(bomberman_t *player, float x, float y, uint32_t w, uint32_t h, float speed, Uint8 *file_data, texture_data_t *texture_data, int copy);
 
 int bmb_bomberman_init_texture(texture_data_t *texture_data, SDL_Renderer *renderer, uint32_t pixel_format, uint8_t channels);
+
+void bmb_bomberman_set_color(bomberman_t *player, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
