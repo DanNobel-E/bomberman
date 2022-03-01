@@ -22,11 +22,8 @@
 
 
 
-
-
 typedef struct socket_info
 {
-
     int s;
     struct sockaddr_in sin;
     bmb_timer_t timer;

@@ -94,12 +94,12 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
     }
 }
 
-void game_quit(player_item **players_ptr,  texture_data_t **players_texture, socket_info_t *socket_info)
+void game_quit(player_item **players_ptr, texture_data_t **players_texture, socket_info_t *socket_info)
 {
 
     SDL_free((*players_texture)->pixels);
     SDL_free(*players_texture);
-    *players_texture=NULL;
+    *players_texture = NULL;
 
     for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
     {
@@ -108,8 +108,9 @@ void game_quit(player_item **players_ptr,  texture_data_t **players_texture, soc
         dlist_remove(players_ptr, player, player_item);
         dlist_destroy_item(&player, player_item);
     }
+
     SDL_free(*players_ptr);
-    *players_ptr=NULL;
+    *players_ptr = NULL;
     bmb_client_close(&socket_info->s);
     SDL_Quit();
 }
@@ -137,7 +138,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         bmb_timer_tick(&auth_check_timer);
         if (!bmb_timer_stop(&auth_check_timer))
         {
-            game_quit(players_ptr, socket_info);
+            game_quit(players_ptr, players_texture, socket_info);
             return;
         }
         bmb_timer_update(&auth_check_timer);
@@ -150,7 +151,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         bmb_timer_tick(&auth_check_timer);
         if (!bmb_timer_stop(&auth_check_timer))
         {
-            game_quit(players_ptr, socket_info);
+            game_quit(players_ptr, players_texture, socket_info);
             return;
         }
         bmb_timer_update(&auth_check_timer);
@@ -171,10 +172,10 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
             if (event.type == SDL_QUIT)
                 running = 0;
 
-            if (event->type == SDLK_ESCAPE)
+            if (event.type == SDLK_ESCAPE)
             {
-                game_quit(players_ptr, socket_info)
-                    running = 0;
+                game_quit(players_ptr, players_texture, socket_info);
+                running = 0;
             }
             // Input
             game_player_input(&event, &(player->movable));
@@ -222,8 +223,8 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
             packet_position_t packet_pos = bmb_packet_position(player, player->movable.x, player->movable.y);
             bmb_client_send_packet(&socket_info->sin, &socket_info->s, (char *)&packet_pos, sizeof(packet_position_t));
 
-            bmb_check_position(socket_info, players_ptr, player);
         }
+            bmb_check_position(socket_info, players_ptr, player);
 
         for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
         {
@@ -237,5 +238,5 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         bmb_timer_update(&socket_info->timer);
     }
 
-    game_quit(players_ptr, socket_info);
+    game_quit(players_ptr, players_texture, socket_info);
 }

@@ -134,6 +134,7 @@ int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, 
     char buffer[16];
     int recv_bytes = recv(socket_info->s, buffer, 16, 0);
 
+
     if (recv_bytes > 0)
     {
 
@@ -174,8 +175,8 @@ int bmb_check_position(socket_info_t *socket_info, player_item **players_ptr, bo
 {
 
     char buffer[12];
-    int recv_bytes = recvfrom(socket_info->s, buffer, 12, 0, (struct sockaddr*)&socket_info->sin, (int*)&socket_info->sin);
-            
+    int recv_bytes = recv(socket_info->s, buffer, 12, 0);
+
     printf("recieved %d bytes via UDP\n", recv_bytes);
 
     if (recv_bytes > 0)
