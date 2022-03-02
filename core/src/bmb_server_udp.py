@@ -98,7 +98,6 @@ class Server:
         packet_color = struct.pack("BBBB", self.pk_ids['PK_COL_ID'], r, g, b)
         self.socket.sendto(packet_color, new_player)
         self.send_new_player_info(new_player)
-        print(self.players)
         
 
     def send_new_player_info(self, new_player):
