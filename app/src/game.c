@@ -94,24 +94,37 @@ void game_player_input(SDL_Event *event, movable_t *player_movable)
     }
 }
 
-void game_quit(player_item **players_ptr, texture_data_t **players_texture, socket_info_t *socket_info)
+void game_quit(player_item **players_ptr, bomberman_t *player, texture_data_t **players_texture, socket_info_t *socket_info)
 {
-
-    SDL_free((*players_texture)->pixels);
-    SDL_free(*players_texture);
-    *players_texture = NULL;
-
-    for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
+    if (player)
     {
-        player_item *player = dlist_get_element_at(players_ptr, i, player_item);
-        SDL_free(player->object);
-        dlist_remove(players_ptr, player, player_item);
-        dlist_destroy_item(&player, player_item);
+        packet_disconnection_t packet_quit = bmb_packet_disconnection(socket_info, player);
+        bmb_client_send_packet(&socket_info->sin, &socket_info->s, (char *)&packet_quit, sizeof(packet_disconnection_t));
     }
 
-    SDL_free(*players_ptr);
-    *players_ptr = NULL;
-    bmb_client_close(&socket_info->s);
+    if (*players_texture)
+    {
+        SDL_free((*players_texture)->pixels);
+        SDL_free(*players_texture);
+        *players_texture = NULL;
+    }
+
+    if (*players_ptr)
+    {
+
+        for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
+        {
+            player_item *player = dlist_get_element_at(players_ptr, i, player_item);
+            SDL_free(player->object);
+            dlist_remove(players_ptr, player, player_item);
+            dlist_destroy_item(&player, player_item);
+        }
+        SDL_free(*players_ptr);
+        *players_ptr = NULL;
+    }
+    if (socket_info)
+        bmb_client_close(&socket_info->s);
+
     SDL_Quit();
 }
 
@@ -138,7 +151,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         bmb_timer_tick(&auth_check_timer);
         if (!bmb_timer_stop(&auth_check_timer))
         {
-            game_quit(players_ptr, players_texture, socket_info);
+            game_quit(players_ptr, player, players_texture, socket_info);
             return;
         }
         bmb_timer_update(&auth_check_timer);
@@ -151,7 +164,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         bmb_timer_tick(&auth_check_timer);
         if (!bmb_timer_stop(&auth_check_timer))
         {
-            game_quit(players_ptr, players_texture, socket_info);
+            game_quit(players_ptr, player, players_texture, socket_info);
             return;
         }
         bmb_timer_update(&auth_check_timer);
@@ -159,7 +172,7 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
     bmb_bomberman_set_color(player, player_color.r, player_color.g, player_color.b, 255);
 
     // set packet timer
-    bmb_timer_start(&socket_info->timer, 1);
+    bmb_timer_start(&socket_info->timer, 0.1f);
 
     int running = 1;
     while (running)
@@ -174,7 +187,6 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
 
             if (event.type == SDLK_ESCAPE)
             {
-                game_quit(players_ptr, players_texture, socket_info);
                 running = 0;
             }
             // Input
@@ -211,9 +223,6 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
             }
         }
 
-        // check for new players
-        bmb_check_new_player(socket_info, players_ptr, *renderer, *players_texture);
-
         bmb_move_on_level(level, &player->movable);
         player->player_rect.x = player->movable.x;
         player->player_rect.y = player->movable.y;
@@ -222,9 +231,11 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         {
             packet_position_t packet_pos = bmb_packet_position(player, player->movable.x, player->movable.y);
             bmb_client_send_packet(&socket_info->sin, &socket_info->s, (char *)&packet_pos, sizeof(packet_position_t));
+            int recv_result= bmb_receive_packet(socket_info, players_ptr, player, *players_texture);
 
+            if(recv_result==PK_DSC_ID)
+                running=0;
         }
-            bmb_check_position(socket_info, players_ptr, player);
 
         for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
         {
@@ -238,5 +249,5 @@ void game_run(SDL_Window **window, SDL_Renderer **renderer, level_t *level,
         bmb_timer_update(&socket_info->timer);
     }
 
-    game_quit(players_ptr, players_texture, socket_info);
+    game_quit(players_ptr, player, players_texture, socket_info);
 }

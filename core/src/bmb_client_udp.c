@@ -128,36 +128,73 @@ int bmb_check_auth(bomberman_t *player, socket_info_t *socket_info)
     return -1;
 }
 
-int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer, texture_data_t *players_texture)
+packet_position_t bmb_packet_position(bomberman_t *player, const float x, const float y)
+{
+    return (packet_position_t){PK_POS_ID, player->index, x, y};
+}
+
+int bmb_receive_packet(socket_info_t *socket_info, player_item **players_ptr, bomberman_t *player, texture_data_t *players_texture)
 {
 
     char buffer[16];
     int recv_bytes = recv(socket_info->s, buffer, 16, 0);
-
 
     if (recv_bytes > 0)
     {
 
         uint8_t id = buffer[0];
 
-        if (id == PK_PLY_ID)
+        if (id == PK_POS_ID && recv_bytes == sizeof(packet_position_t))
+            return bmb_read_position_packet(players_ptr, player, buffer);
+        else if (id == PK_PLY_ID && recv_bytes == sizeof(packet_player_t))
+            return bmb_read_player_packet(players_ptr, players_texture, buffer);
+        else if (id == PK_DSC_ID && recv_bytes == sizeof(packet_disconnection_t))
+            return bmb_read_disconnection_packet(players_ptr, player, buffer);
+    }
+
+    return -1;
+}
+
+int bmb_read_player_packet(player_item **players_ptr, texture_data_t *players_texture, const char *packet)
+{
+    uint8_t r = packet[1];
+    uint8_t g = packet[2];
+    uint8_t b = packet[3];
+    uint8_t index = packet[12];
+
+    float x = ((float *)packet)[1];
+    float y = ((float *)packet)[2];
+
+    bomberman_t *new_player = SDL_malloc(sizeof(bomberman_t));
+    bmb_bomberman_init(new_player, x, y, 32, 32, 48, NULL, players_texture, 1);
+    bmb_bomberman_set_color(new_player, r, g, b, 255);
+    new_player->index = index;
+    player_item *new_p_item = item_new(new_player, player_item);
+    dlist_append(players_ptr, new_p_item, player_item);
+
+    return 0;
+}
+
+int bmb_read_position_packet(player_item **players_ptr, bomberman_t *player, const char *packet)
+{
+    uint8_t index = packet[1];
+
+    if (index == player->index)
+        return -1;
+
+    for (int i = 1; i < dlist_count(players_ptr, player_item); i++)
+    {
+
+        bomberman_t *current_player = dlist_get_element_at(players_ptr, i, player_item)->object;
+        if (current_player->index == index)
         {
-            uint8_t r = buffer[1];
-            uint8_t g = buffer[2];
-            uint8_t b = buffer[3];
-            uint8_t index = buffer[12];
 
-            printf("received index: %d\n", index);
-
-            float x = ((float *)buffer)[1];
-            float y = ((float *)buffer)[2];
-
-            bomberman_t *new_player = SDL_malloc(sizeof(bomberman_t));
-            bmb_bomberman_init(new_player, x, y, 32, 32, 48, NULL, players_texture, 1);
-            bmb_bomberman_set_color(new_player, r, g, b, 255);
-            new_player->index = index;
-            player_item *new_p_item = item_new(new_player, player_item);
-            dlist_append(players_ptr, new_p_item, player_item);
+            float x = ((float *)packet)[1];
+            float y = ((float *)packet)[2];
+            current_player->movable.x = x;
+            current_player->movable.y = y;
+            current_player->player_rect.x = x;
+            current_player->player_rect.y = y;
 
             return 0;
         }
@@ -166,53 +203,36 @@ int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, 
     return -1;
 }
 
-packet_position_t bmb_packet_position(bomberman_t *player, const float x, const float y)
+int bmb_read_disconnection_packet(player_item **players_ptr, bomberman_t *player, const char *packet)
 {
-    return (packet_position_t){PK_POS_ID, player->index, x, y};
-}
+    uint8_t index = packet[1];
 
-int bmb_check_position(socket_info_t *socket_info, player_item **players_ptr, bomberman_t *player)
-{
-
-    char buffer[12];
-    int recv_bytes = recv(socket_info->s, buffer, 12, 0);
-
-    printf("recieved %d bytes via UDP\n", recv_bytes);
-
-    if (recv_bytes > 0)
+    if (index == player->index)
+        return PK_DSC_ID; // TODO serve kicks client out
+    else
     {
-
-        uint8_t id = buffer[0];
-
-        if (id == PK_POS_ID)
+        for (int i = 1; i < dlist_count(players_ptr, player_item); i++)
         {
-            uint8_t index = buffer[1];
-            printf("updated player index: %d", index);
 
-            if (index == player->index)
-                return -1;
-
-            for (int i = 0; i < dlist_count(players_ptr, player_item); i++)
+            bomberman_t *current_player = dlist_get_element_at(players_ptr, i, player_item)->object;
+            if (current_player->index == index)
             {
-
-                bomberman_t *current_player = dlist_get_element_at(players_ptr, i, player_item)->object;
-                if (current_player->index == index)
-                {
-
-                    float x = ((float *)buffer)[1];
-                    float y = ((float *)buffer)[2];
-                    current_player->movable.x = x;
-                    current_player->movable.y = y;
-                    current_player->player_rect.x = x;
-                    current_player->player_rect.y = y;
-
-                    return 0;
-                }
+                player_item *p_item = dlist_remove_at(players_ptr, i, player_item);
+                SDL_free(current_player);
+                dlist_destroy_item(&p_item, player_item);
+                p_item = NULL;
+                return 0;
             }
         }
     }
 
     return -1;
+}
+
+packet_disconnection_t bmb_packet_disconnection(socket_info_t *socket_info, bomberman_t *player)
+{
+
+    return (packet_disconnection_t){PK_DSC_ID, player->index};
 }
 
 void bmb_client_close(int *s)

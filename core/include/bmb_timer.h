@@ -4,7 +4,7 @@ typedef struct bmb_timer
 {
     uint64_t current_tick;
     uint64_t prev_tick;
-    uint64_t duration;
+    float duration;
     double counter;
     
 
@@ -20,6 +20,6 @@ void bmb_timer_reset(bmb_timer_t *timer);
 
 void bmb_timer_update(bmb_timer_t *timer);
 
-void bmb_timer_start(bmb_timer_t *timer, uint64_t duration);
+void bmb_timer_start(bmb_timer_t *timer, float duration);
 
 

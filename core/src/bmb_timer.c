@@ -31,7 +31,7 @@ void bmb_timer_update(bmb_timer_t *timer)
     timer->prev_tick=timer->current_tick;
 }
 
-void bmb_timer_start(bmb_timer_t *timer, uint64_t duration)
+void bmb_timer_start(bmb_timer_t *timer, float duration)
 {
 
     timer->duration = duration;

@@ -1,4 +1,5 @@
 from ctypes import sizeof
+from genericpath import exists
 import random
 import socket
 import struct
@@ -27,7 +28,6 @@ class Player:
         now = time.time()
         self.position = (x, y)
         self.last_update = time.time()
-        print(self.signature, self.position)
 
 
 class Server:
@@ -38,6 +38,8 @@ class Server:
         self.tolerance = tolerance
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.socket.bind((self.address, self.port))
+        self.packet = None
+        self.sender = None
         self.players = {}
         self.current_player_index = 0
         self.pk_ids = {
@@ -45,24 +47,38 @@ class Server:
             'PK_COL_ID':  2,
             'PK_POS_ID': 3,
             'PK_PLY_ID': 4,
+            'PK_DSC_ID': 5,
+
         }
 
     def run_once(self):
         try:
             packet, sender = self.socket.recvfrom(64)
+            self.packet = packet
+            self.sender = sender
             if len(packet) > 20:
                 raise InvalidPacketSize()
-            if sender is not self.players or self.players[sender] is not None:
+            if sender is self.players and self.players[sender] is None:
+                self.kick_out_player(sender, False)
+                return
+            if sender is self.players:
                 self.check_dos_attack(sender)
-                self.read_current_packet(packet, sender)
+            self.read_current_packet(packet, sender)
+            self.packet = None
+            self.sender = None
         except InvalidPacketSize:
             print('Invalid packet size detected from {0}'.format(sender))
+            if self.sender is not None:
+                self.kick_out_player(sender,False)
         except DosAttemptDetected:
             print('Dos detected from {0}, kicking it out'.format(sender))
             # del(self.players[sender]) #TO DO blacklist
-            self.players[sender] = None
+            if self.sender is not None:
+                self.kick_out_player(sender, False)
         except OSError:
             print('packet discarded')
+            if self.sender is not None:
+                self.kick_out_player(sender, False)
 
     def run(self):
         print('server running')
@@ -72,7 +88,8 @@ class Server:
 
     def new_player_authentication(self, new_player, auth_packet):
         auth = struct.unpack('BBB', auth_packet)
-        self.players[new_player] = Player(new_player, auth[1], self.current_player_index)
+        self.players[new_player] = Player(
+            new_player, auth[1], self.current_player_index)
         self.current_player_index += 1
         auth_packet = struct.pack('BBB', self.pk_ids['PK_AUTH_ID'], auth[1], self.players[new_player].index)
         self.socket.sendto(auth_packet, new_player)
@@ -81,6 +98,8 @@ class Server:
         packet_color = struct.pack("BBBB", self.pk_ids['PK_COL_ID'], r, g, b)
         self.socket.sendto(packet_color, new_player)
         self.send_new_player_info(new_player)
+        print(self.players)
+        
 
     def send_new_player_info(self, new_player):
         for player in self.players:
@@ -115,12 +134,36 @@ class Server:
                 y = pos_packet[2]
                 self.players[sender].update(x, y)
                 self.broadcast_position(sender, x, y)
+        elif packet_id == self.pk_ids['PK_DSC_ID']:
+            if sender in self.players:
+                self.disconnect_player(packet, sender, True)
 
     def broadcast_position(self, sender, x, y):
-        for signature in self.players:
-            if signature != sender:
-                p_packet = struct.pack('BBBB2f', self.pk_ids['PK_POS_ID'], self.players[sender].index, 0, 0, x, y)
-                self.socket.sendto(p_packet, signature)
+        for player in self.players:
+            if self.players[player] is not None:
+                if player != sender:
+                    pos_packet = struct.pack(
+                        'BBBB2f', self.pk_ids['PK_POS_ID'], self.players[sender].index, 0, 0, x, y)
+                    self.socket.sendto(pos_packet, player)
+
+    def disconnect_player(self, packet, sender, self_disconnect):
+        disc_packet = struct.unpack('BB', packet)
+        if self.players[sender].index== disc_packet[1]:
+            if self_disconnect:
+                del self.players[sender]
+            else:
+                self.players[sender]=None
+        for player in self.players:
+            if self.players[player] is not None:
+                self.socket.sendto(packet, player)
+        self.packet = None
+        self.sender = None
+
+    def kick_out_player(self, sender, self_disconnect):
+        if sender is self.players:
+            if self.players[sender] is not None:
+                disc_packet = struct.pack('BB', self.pk_ids['PK_DSC_ID'], self.players[sender].index)
+                self.disconnect_player(disc_packet, sender, self_disconnect)
 
 
 if __name__ == '__main__':

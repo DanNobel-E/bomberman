@@ -19,8 +19,7 @@
 #define PK_COL_ID 2
 #define PK_POS_ID 3
 #define PK_PLY_ID 4
-
-
+#define PK_DSC_ID 5
 
 typedef struct socket_info
 {
@@ -30,6 +29,14 @@ typedef struct socket_info
     uint8_t auth;
 
 } socket_info_t;
+
+typedef struct packet_disconnection
+{
+
+    uint8_t id;
+    uint8_t index;
+
+} packet_disconnection_t;
 
 typedef struct packet_player
 {
@@ -41,7 +48,6 @@ typedef struct packet_player
     float x;
     float y;
     uint8_t index;
-
 
 } packet_player_t;
 
@@ -55,8 +61,6 @@ typedef struct packet_position
 
 } packet_position_t;
 
-
-
 typedef struct packet_color
 {
 
@@ -64,7 +68,6 @@ typedef struct packet_color
     uint8_t r;
     uint8_t g;
     uint8_t b;
-
 
 } packet_color_t;
 
@@ -74,7 +77,6 @@ typedef struct packet_auth
     uint8_t id;
     uint8_t auth;
     uint8_t index;
-
 
 } packet_auth_t;
 
@@ -92,10 +94,16 @@ packet_color_t bmb_packet_color(uint8_t r, uint8_t g, uint8_t b);
 
 int bmb_check_color(socket_info_t *socket_info, packet_color_t *packet_color);
 
-int bmb_check_new_player(socket_info_t *socket_info, player_item **players_ptr, SDL_Renderer *renderer, texture_data_t *players_texture);
-
 packet_position_t bmb_packet_position(bomberman_t *player, const float x, const float y);
 
-int bmb_check_position(socket_info_t *socket_info, player_item **players_ptr, bomberman_t *player);
+int bmb_receive_packet(socket_info_t *socket_info, player_item **players_ptr, bomberman_t *player, texture_data_t *players_texture);
+
+int bmb_read_player_packet(player_item **players_ptr, texture_data_t *players_texture, const char *packet);
+
+int bmb_read_position_packet(player_item **players_ptr, bomberman_t *player, const char *packet);
+
+int bmb_read_disconnection_packet(player_item **players_ptr, bomberman_t *player, const char *packet);
+
+packet_disconnection_t bmb_packet_disconnection(socket_info_t *socket_info, bomberman_t *player);
 
 void bmb_client_close(int *s);
