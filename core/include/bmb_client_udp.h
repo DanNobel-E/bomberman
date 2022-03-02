@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #endif
 
+#include <SDL.h>
 #include <stdint.h>
 #include "bmb_bomberman.h"
 #include "double_linked_list.h"

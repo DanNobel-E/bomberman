@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SDL.h>
 #include <stdint.h>
 
 int32_t level001_cells[] = {

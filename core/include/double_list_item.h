@@ -1,4 +1,6 @@
 #pragma once
+#include <SDL.h>
+
 #include "bmb_bomberman.h"
 
 typedef struct double_list_node_t

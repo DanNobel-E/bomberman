@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL.h>
+
 typedef struct bmb_timer
 {
     uint64_t current_tick;

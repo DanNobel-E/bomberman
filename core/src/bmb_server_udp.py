@@ -88,8 +88,7 @@ class Server:
 
     def new_player_authentication(self, new_player, auth_packet):
         auth = struct.unpack('BBB', auth_packet)
-        self.players[new_player] = Player(
-            new_player, auth[1], self.current_player_index)
+        self.players[new_player] = Player(new_player, auth[1], self.current_player_index)
         self.current_player_index += 1
         auth_packet = struct.pack('BBB', self.pk_ids['PK_AUTH_ID'], auth[1], self.players[new_player].index)
         self.socket.sendto(auth_packet, new_player)
